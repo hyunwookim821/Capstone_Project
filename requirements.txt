@@ -4,4 +4,6 @@ pydantic[email]>=2.0
 python-multipart
 python-docx
 PyPDF2
-kospellpy
+anthropic
+python-dotenv
+requests
