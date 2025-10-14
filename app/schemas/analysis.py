@@ -1,5 +1,5 @@
 from pydantic import BaseModel
 
-class GrammarCheckResult(BaseModel):
-    original: str
-    corrected: str
+class GrammarAnalysis(BaseModel):
+    error_count: int
+    corrected_sentence: str

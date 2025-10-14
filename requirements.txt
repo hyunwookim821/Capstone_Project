@@ -7,3 +7,5 @@ PyPDF2
 anthropic
 python-dotenv
 requests
+# py-hanspell from a fixed git repository
+git+https://github.com/Hyunwoo2267/hanspell.git

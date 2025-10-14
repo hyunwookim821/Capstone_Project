@@ -5,12 +5,12 @@ import io
 import os
 import docx
 from PyPDF2 import PdfReader
-from app.utils.spell_check import check_spelling
+from hanspell import spell_checker
 import anthropic
 from dotenv import load_dotenv
 
 from app.schemas.resume import Resume, ResumeCreate, ResumeUpdate
-from app.schemas.analysis import GrammarCheckResult
+from app.schemas.analysis import GrammarAnalysis
 from app.schemas.feedback import AIFeedback
 
 load_dotenv()
@@ -118,20 +118,38 @@ def delete_resume(
 
 # --- Analysis Endpoints ---
 
-@router.post("/{resume_id}/check-grammar", response_model=GrammarCheckResult)
+@router.post("/{resume_id}/check-grammar", response_model=GrammarAnalysis)
 def check_resume_grammar(resume_id: int) -> Any:
     """
-    Check the grammar of a resume using kospellpy.
+    Check the grammar of a resume using hanspell.
     """
     if resume_id not in DUMMY_RESUMES:
         raise HTTPException(status_code=404, detail="Resume not found")
 
     content = DUMMY_RESUMES[resume_id].get("content", "")
     if not content:
-        return GrammarCheckResult(original=content, corrected=content)
+        return GrammarAnalysis(errors=[], error_count=0)
 
-    corrected_content = check_spelling(content)
-    return GrammarCheckResult(original=content, corrected=corrected_content)
+    # Split the content by newlines to handle texts longer than 500 characters.
+    lines = content.split('\n')
+    total_errors = 0
+    corrected_lines = []
+
+    for line in lines:
+        if not line.strip():
+            corrected_lines.append(line)
+            continue
+        
+        result = spell_checker.check(line)
+        total_errors += result.errors
+        corrected_lines.append(result.checked)
+
+    corrected_sentence = '\n'.join(corrected_lines)
+
+    return GrammarAnalysis(
+        error_count=total_errors,
+        corrected_sentence=corrected_sentence
+    )
 
 @router.post("/{resume_id}/feedback", response_model=AIFeedback)
 def get_ai_feedback(resume_id: int) -> Any:
