@@ -7,5 +7,8 @@ PyPDF2
 anthropic
 python-dotenv
 requests
+gTTS
+openai-whisper
+pydub
 # py-hanspell from a fixed git repository
 git+https://github.com/Hyunwoo2267/hanspell.git

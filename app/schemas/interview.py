@@ -1,6 +1,6 @@
 from pydantic import BaseModel, Field
 from datetime import datetime
-from typing import Optional
+from typing import Optional, List
 
 class InterviewBase(BaseModel):
     status: Optional[str] = 'scheduled'
@@ -21,3 +21,10 @@ class Interview(InterviewBase):
 
     class Config:
         from_attributes = True
+
+
+class GeneratedQuestion(BaseModel):
+    question: str
+
+class QuestionList(BaseModel):
+    questions: List[str]
