@@ -14,10 +14,10 @@ class ResumeUpdate(ResumeBase):
     pass
 
 class Resume(ResumeBase):
-    id: int
-    owner_id: int
+    resume_id: int
+    user_id: int
     created_at: datetime
-    updated_at: datetime
+    updated_at: Optional[datetime] = None
 
     class Config:
         from_attributes = True

@@ -1,8 +1,8 @@
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form
 from typing import List, Any
-from datetime import datetime
-import io
+from sqlalchemy.orm import Session
 import os
+import io
 import docx
 from PyPDF2 import PdfReader
 from hanspell import spell_checker
@@ -10,6 +10,8 @@ import anthropic
 import google.generativeai as genai
 from dotenv import load_dotenv
 
+from app import crud, models
+from app.api import deps
 from app.schemas.resume import Resume, ResumeCreate, ResumeUpdate
 from app.schemas.analysis import GrammarAnalysis
 from app.schemas.feedback import AIFeedback
@@ -19,38 +21,17 @@ load_dotenv()
 
 router = APIRouter()
 
-# Dummy database
-DUMMY_RESUMES = {
-    1: {
-        "id": 1,
-        "owner_id": 1,
-        "title": "My First Resume",
-        "content": "아버지가방에 들어가신다. 이력서에 오타가 있으면 않되요.",
-        "created_at": datetime(2023, 1, 1),
-        "updated_at": datetime(2023, 1, 1),
-    },
-    2: {
-        "id": 2,
-        "owner_id": 1,
-        "title": "My Second Resume",
-        "content": "This is the content of my second resume, focused on AI.",
-        "created_at": datetime(2023, 1, 2),
-        "updated_at": datetime(2023, 1, 2),
-    },
-}
-
-# --- Helper Functions ---
-
-def _parse_docx(file: UploadFile) -> str:
+# --- Helper Functions (File Parsers) ---
+def _parse_docx(file_content: bytes) -> str:
     try:
-        document = docx.Document(io.BytesIO(file.file.read()))
+        document = docx.Document(io.BytesIO(file_content))
         return "\n".join([para.text for para in document.paragraphs])
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error parsing DOCX file: {e}")
 
-def _parse_pdf(file: UploadFile) -> str:
+def _parse_pdf(file_content: bytes) -> str:
     try:
-        reader = PdfReader(io.BytesIO(file.file.read()))
+        reader = PdfReader(io.BytesIO(file_content))
         return "\n".join([page.extract_text() for page in reader.pages])
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error parsing PDF file: {e}")
@@ -58,100 +39,124 @@ def _parse_pdf(file: UploadFile) -> str:
 # --- Resume CRUD Endpoints ---
 
 @router.get("/", response_model=List[Resume])
-def read_resumes(skip: int = 0, limit: int = 100) -> Any:
-    return list(DUMMY_RESUMES.values())[skip:limit]
+def read_resumes(
+    db: Session = Depends(deps.get_db),
+    skip: int = 0,
+    limit: int = 100,
+    current_user: models.User = Depends(deps.get_current_user),
+) -> Any:
+    """Retrieve resumes for the current user."""
+    resumes = crud.resume.get_multi_by_owner(db, owner_id=current_user.user_id, skip=skip, limit=limit)
+    return resumes
 
 @router.post("/", response_model=Resume)
-async def create_resume(title: str = Form(...), file: UploadFile = File(...)) -> Any:
+async def create_resume(
+    *,
+    db: Session = Depends(deps.get_db),
+    title: str = Form(...),
+    file: UploadFile = File(...),
+    current_user: models.User = Depends(deps.get_current_user),
+) -> Any:
+    """Create new resume from an uploaded file for the current user."""
+    file_content = await file.read()
     content = ""
     if file.content_type == "application/pdf":
-        content = _parse_pdf(file)
+        content = _parse_pdf(file_content)
     elif file.content_type == "application/vnd.openxmlformats-officedocument.wordprocessingml.document":
-        content = _parse_docx(file)
+        content = _parse_docx(file_content)
     else:
         raise HTTPException(status_code=400, detail="Unsupported file type.")
-
+    
     if not content:
-        raise HTTPException(status_code=400, detail="Could not extract text.")
+        raise HTTPException(status_code=400, detail="Could not extract text from file.")
 
-    new_id = max(DUMMY_RESUMES.keys()) + 1
-    resume = Resume(
-        id=new_id, owner_id=1, title=title, content=content,
-        created_at=datetime.now(), updated_at=datetime.now()
-    )
-    DUMMY_RESUMES[new_id] = resume.model_dump()
+    resume_in = ResumeCreate(title=title, content=content)
+    resume = crud.resume.create(db=db, obj_in=resume_in, user_id=current_user.user_id)
     return resume
 
 @router.get("/{resume_id}", response_model=Resume)
-def read_resume(resume_id: int) -> Any:
-    if resume_id not in DUMMY_RESUMES:
-        raise HTTPException(status_code=404, detail="Resume not found")
-    return DUMMY_RESUMES[resume_id]
+def read_resume(
+    resume_id: int,
+    db: Session = Depends(deps.get_db),
+    current_user: models.User = Depends(deps.get_current_user),
+) -> Any:
+    """Get resume by ID. User can only access their own resume."""
+    resume = crud.resume.get(db=db, resume_id=resume_id)
+    if not resume or resume.user_id != current_user.user_id:
+        raise HTTPException(status_code=404, detail="Resume not found or access denied")
+    return resume
 
 @router.put("/{resume_id}", response_model=Resume)
-def update_resume(resume_id: int, resume_in: ResumeUpdate) -> Any:
-    if resume_id not in DUMMY_RESUMES:
-        raise HTTPException(status_code=404, detail="Resume not found")
-    
-    resume_data = DUMMY_RESUMES[resume_id]
-    resume = Resume(**resume_data)
-    update_data = resume_in.model_dump(exclude_unset=True)
-    
-    updated_resume = resume.model_copy(update=update_data)
-    updated_resume.updated_at = datetime.now()
-    
-    DUMMY_RESUMES[resume_id] = updated_resume.model_dump()
-    return updated_resume
+def update_resume(
+    resume_id: int,
+    *,
+    db: Session = Depends(deps.get_db),
+    resume_in: ResumeUpdate,
+    current_user: models.User = Depends(deps.get_current_user),
+) -> Any:
+    """Update a resume. User can only update their own resume."""
+    resume = crud.resume.get(db=db, resume_id=resume_id)
+    if not resume or resume.user_id != current_user.user_id:
+        raise HTTPException(status_code=404, detail="Resume not found or access denied")
+    resume = crud.resume.update(db=db, db_obj=resume, obj_in=resume_in)
+    return resume
 
 @router.delete("/{resume_id}", response_model=Resume)
-def delete_resume(resume_id: int) -> Any:
-    if resume_id not in DUMMY_RESUMES:
-        raise HTTPException(status_code=404, detail="Resume not found")
-    return DUMMY_RESUMES.pop(resume_id)
+def delete_resume(
+    resume_id: int,
+    *,
+    db: Session = Depends(deps.get_db),
+    current_user: models.User = Depends(deps.get_current_user),
+) -> Any:
+    """Delete a resume. User can only delete their own resume."""
+    resume = crud.resume.get(db=db, resume_id=resume_id)
+    if not resume or resume.user_id != current_user.user_id:
+        raise HTTPException(status_code=404, detail="Resume not found or access denied")
+    resume = crud.resume.remove(db=db, resume_id=resume_id)
+    return resume
 
 # --- Analysis Endpoints ---
 
 @router.post("/{resume_id}/check-grammar", response_model=GrammarAnalysis)
-def check_resume_grammar(resume_id: int) -> Any:
-    """
-    Check the grammar of a resume using hanspell.
-    """
-    if resume_id not in DUMMY_RESUMES:
-        raise HTTPException(status_code=404, detail="Resume not found")
-
-    content = DUMMY_RESUMES[resume_id].get("content", "")
+def check_resume_grammar(
+    resume_id: int, 
+    db: Session = Depends(deps.get_db),
+    current_user: models.User = Depends(deps.get_current_user),
+) -> Any:
+    resume = crud.resume.get(db=db, resume_id=resume_id)
+    if not resume or resume.user_id != current_user.user_id:
+        raise HTTPException(status_code=404, detail="Resume not found or access denied")
+    content = resume.content or ""
     
-    # Split the content by newlines to handle texts longer than 500 characters.
     lines = content.split('\n')
     total_errors = 0
     corrected_lines = []
-
     for line in lines:
         if not line.strip():
             corrected_lines.append(line)
             continue
-        
         result = spell_checker.check(line)
         total_errors += result.errors
         corrected_lines.append(result.checked)
-
     corrected_sentence = '\n'.join(corrected_lines)
+    return GrammarAnalysis(error_count=total_errors, corrected_sentence=corrected_sentence)
 
-    return GrammarAnalysis(
-        error_count=total_errors,
-        corrected_sentence=corrected_sentence
-    )
 
 @router.post("/{resume_id}/feedback", response_model=AIFeedback)
-def get_ai_feedback(resume_id: int) -> Any:
+def get_ai_feedback(
+    resume_id: int,
+    db: Session = Depends(deps.get_db),
+    current_user: models.User = Depends(deps.get_current_user),
+) -> Any:
     """
     Get AI feedback on a resume using Claude API.
     """
-    if resume_id not in DUMMY_RESUMES:
-        raise HTTPException(status_code=404, detail="Resume not found")
+    resume = crud.resume.get(db=db, resume_id=resume_id)
+    if not resume or resume.user_id != current_user.user_id:
+        raise HTTPException(status_code=404, detail="Resume not found or access denied")
 
-    content = DUMMY_RESUMES[resume_id].get("content", "")
-    
+    content = resume.content or ""
+
     # First, check the grammar of the content, handling long texts by splitting them.
     lines = content.split('\n')
     total_errors = 0
@@ -161,7 +166,7 @@ def get_ai_feedback(resume_id: int) -> Any:
         if not line.strip():
             corrected_lines.append(line)
             continue
-        
+
         result = spell_checker.check(line)
         total_errors += result.errors
         corrected_lines.append(result.checked)
@@ -171,14 +176,18 @@ def get_ai_feedback(resume_id: int) -> Any:
     if not corrected_content:
         raise HTTPException(status_code=400, detail="Resume content is empty after spell check.")
 
-    api_key = os.getenv("ANTHROPIC_API_KEY")
+    api_key = os.getenv("CLAUDE_API_KEY")
     if not api_key:
-        raise HTTPException(status_code=500, detail="ANTHROPIC_API_KEY not set.")
+        raise HTTPException(status_code=500, detail="CLAUDE_API_KEY not set.")
+
+    claude_model = os.getenv("CLAUDE_MODEL")
+    if not claude_model:
+        raise HTTPException(status_code=500, detail="CLAUDE_MODEL environment variable not set.")
 
     try:
         client = anthropic.Anthropic(api_key=api_key)
         message = client.messages.create(
-            model="claude-haiku-4-5-20251001",
+            model=claude_model,
             max_tokens=4096,
             messages=[
                 {
@@ -239,15 +248,21 @@ def get_ai_feedback(resume_id: int) -> Any:
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error calling Claude API: {e}")
 
+
 @router.post("/{resume_id}/generate-questions", response_model=QuestionList)
-def generate_interview_questions(resume_id: int) -> Any:
+def generate_interview_questions(
+    resume_id: int,
+    db: Session = Depends(deps.get_db),
+    current_user: models.User = Depends(deps.get_current_user),
+) -> Any:
     """
     Generate interview questions based on the resume using Gemini API.
     """
-    if resume_id not in DUMMY_RESUMES:
-        raise HTTPException(status_code=404, detail="Resume not found")
+    resume = crud.resume.get(db=db, resume_id=resume_id)
+    if not resume or resume.user_id != current_user.user_id:
+        raise HTTPException(status_code=404, detail="Resume not found or access denied")
 
-    content = DUMMY_RESUMES[resume_id].get("content", "")
+    content = resume.content or ""
     if not content:
         raise HTTPException(status_code=400, detail="Resume content is empty.")
 
@@ -255,10 +270,14 @@ def generate_interview_questions(resume_id: int) -> Any:
     if not google_api_key:
         raise HTTPException(status_code=500, detail="GOOGLE_API_KEY not set.")
 
+    gemini_model = os.getenv("GEMINI_MODEL")
+    if not gemini_model:
+        raise HTTPException(status_code=500, detail="GEMINI_MODEL environment variable not set.")
+
     try:
         genai.configure(api_key=google_api_key)
-        model = genai.GenerativeModel('gemini-2.5-flash')
-        
+        model = genai.GenerativeModel(gemini_model)
+
         prompt = f"""당신은 지원자의 역량을 깊이 있게 파악하려는 날카로운 면접관입니다. 당신의 임무는 지원자의 자기소개서와 일반적인 면접 질문을 조합하여, 핵심 역량과 경험의 진위, 그리고 문제 해결 능력을 종합적으로 검증할 수 있는 면접 질문 목록을 생성하는 것입니다. 반드시 아래 규칙과 출력 형식을 엄격하게 준수하여 답변해야 합니다.
 
 [규칙]
@@ -295,11 +314,11 @@ def generate_interview_questions(resume_id: int) -> Any:
 """
 
         response = model.generate_content(prompt)
-        
-        # The response text might contain the title "예상 면접 질문 리스트". 
+
+        # The response text might contain the title "예상 면접 질문 리스트".
         # We split the text by newlines and filter out empty lines and the title.
         questions = [q.strip() for q in response.text.split('\n') if q.strip() and "예상 면접 질문 리스트" not in q]
-        
+
         return QuestionList(questions=questions)
 
     except Exception as e:
