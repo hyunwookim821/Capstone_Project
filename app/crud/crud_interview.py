@@ -32,11 +32,22 @@ def create_question(db: Session, *, obj_in: QuestionCreate) -> Question:
 def get_questions_by_interview(db: Session, interview_id: int) -> List[Question]:
     return db.query(Question).filter(Question.interview_id == interview_id).all()
 
+def get_latest_questions_by_resume(db: Session, resume_id: int) -> List[Question]:
+    """
+    Finds the most recent interview for a given resume and returns its questions.
+    """
+    latest_interview = db.query(Interview).filter(Interview.resume_id == resume_id).order_by(Interview.created_at.desc()).first()
+    if not latest_interview:
+        return []
+    return db.query(Question).filter(Question.interview_id == latest_interview.interview_id).all()
+
+
 # CRUD for Answer
 def create_answer(db: Session, *, obj_in: AnswerCreate) -> Answer:
     db_obj = Answer(
         question_id=obj_in.question_id,
-        answer_text=obj_in.answer_text
+        answer_text=obj_in.answer_text,
+        audio_path=obj_in.audio_path
     )
     db.add(db_obj)
     db.commit()

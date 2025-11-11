@@ -23,7 +23,12 @@ if config.config_file_name is not None:
 # Import your Base and all models
 import sys
 from app.db.base import Base
-from app.models import user, resume # Import all your models here
+# Explicitly import models in dependency order
+from app.models.user import User
+from app.models.resume import Resume
+from app.models.interview import Interview, Question, Answer
+from app.models.analysis import Analysis
+from app.models.passed_resume import PassedResume
 
 # Add the project root to the Python path
 sys.path.insert(0, os.path.realpath(os.path.join(os.path.dirname(__file__), '..')))

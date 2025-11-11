@@ -1,21 +1,23 @@
-from sqlalchemy import Column, BigInteger, String, DateTime, Text, ForeignKey, Identity
+from sqlalchemy import Column, BigInteger, String, Text, DateTime, ForeignKey, Identity
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
+from datetime import datetime
 
 from app.db.base import Base
+from app.models.user import User  # Import User model
 
 
 class Interview(Base):
-    __tablename__ = "interview"
-
+    __tablename__ = 'interview'
     interview_id = Column(BigInteger, Identity(start=1), primary_key=True)
-    user_id = Column(BigInteger, ForeignKey("user.user_id"))
-    resume_id = Column(BigInteger, ForeignKey("resume.resume_id"))
+    user_id = Column(BigInteger, ForeignKey(User.user_id), nullable=False)  # Direct reference
+    resume_id = Column(BigInteger, ForeignKey('resume.resume_id'), nullable=False)
+    video_path = Column(String(255), nullable=True)  # Path to the video file
     created_at = Column(DateTime, server_default=func.now())
 
     user = relationship("User")
     resume = relationship("Resume")
-    questions = relationship("Question", back_populates="interview")
+    questions = relationship("Question", back_populates="interview", cascade="all, delete-orphan")
 
 
 class Question(Base):
@@ -31,11 +33,11 @@ class Question(Base):
 
 
 class Answer(Base):
-    __tablename__ = "answer"
-
+    __tablename__ = 'answer'
     answer_id = Column(BigInteger, Identity(start=1), primary_key=True)
-    question_id = Column(BigInteger, ForeignKey("question.question_id"))
+    question_id = Column(BigInteger, ForeignKey('question.question_id'), nullable=False)
     answer_text = Column(Text, nullable=False)
-    created_at = Column(DateTime, server_default=func.now())
+    audio_path = Column(String(255), nullable=True)  # Path to the audio file
+    created_at = Column(DateTime, default=datetime.utcnow)
 
     question = relationship("Question", back_populates="answers")

@@ -20,5 +20,9 @@ passlib==1.7.4
 python-jose[cryptography]
 pgvector
 sentence-transformers
+librosa
+soundfile
+opencv-python
+mediapipe
 # py-hanspell from a fixed git repository
 git+https://github.com/Hyunwoo2267/hanspell.git

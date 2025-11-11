@@ -3,11 +3,18 @@ from datetime import datetime
 from typing import Optional
 
 class AnalysisBase(BaseModel):
-    feedback_text: Optional[str] = None
+    feedback_text: str
+    speech_rate: Optional[float] = None
+    silence_ratio: Optional[float] = None
+    gaze_stability: Optional[float] = None
+    expression_stability: Optional[float] = None
+    posture_stability: Optional[float] = None
 
 class AnalysisCreate(AnalysisBase):
     interview_id: int
-    feedback_text: str
+
+class AnalysisUpdate(AnalysisBase):
+    pass
 
 class Analysis(AnalysisBase):
     analysis_id: int

@@ -20,9 +20,13 @@ class Question(QuestionBase):
 # Schema for Answer
 class AnswerBase(BaseModel):
     answer_text: str
+    audio_path: Optional[str] = None
 
 class AnswerCreate(AnswerBase):
     question_id: int
+
+class AnswerUpdate(AnswerBase):
+    pass
 
 class Answer(AnswerBase):
     answer_id: int
@@ -36,6 +40,7 @@ class Answer(AnswerBase):
 class InterviewBase(BaseModel):
     user_id: int
     resume_id: int
+    video_path: Optional[str] = None
 
 class InterviewCreate(InterviewBase):
     pass
