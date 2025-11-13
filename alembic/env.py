@@ -29,6 +29,7 @@ from app.models.resume import Resume
 from app.models.interview import Interview, Question, Answer
 from app.models.analysis import Analysis
 from app.models.passed_resume import PassedResume
+from app.models.video_analysis import VideoAnalysis
 
 # Add the project root to the Python path
 sys.path.insert(0, os.path.realpath(os.path.join(os.path.dirname(__file__), '..')))

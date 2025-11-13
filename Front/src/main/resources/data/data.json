@@ -1,0 +1,106 @@
+{
+  "stats": [
+    {
+      "number": "10,000+",
+      "label": "누적 면접 연습"
+    },
+    {
+      "number": "95%",
+      "label": "만족도"
+    },
+    {
+      "number": "4.8",
+      "label": "평균 평점"
+    },
+    {
+      "number": "24/7",
+      "label": "언제든 이용"
+    }
+  ],
+  "features": [
+    {
+      "icon": "<path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z\"></path>",
+      "title": "AI 면접관",
+      "description": "실제 면접관처럼 질문하고 피드백을 제공하는 AI 시스템"
+    },
+    {
+      "icon": "<path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z\"></path>",
+      "title": "맞춤형 질문",
+      "description": "직무와 경력에 맞는 개인화된 면접 질문 생성"
+    },
+    {
+      "icon": "<path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M13 7h8m0 0v8m0-8l-8 8-4-4-6 6\"></path>",
+      "title": "실시간 분석",
+      "description": "답변 내용, 말하기 속도, 자신감 등을 실시간으로 분석"
+    },
+    {
+      "icon": "<path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z\"></path>",
+      "title": "상세한 피드백",
+      "description": "면접 후 상세한 분석 리포트와 개선점 제안"
+    }
+  ],
+  "steps": [
+    {
+      "step": "01",
+      "title": "프로필 설정",
+      "description": "원하는 직무와 경력 수준을 설정하세요",
+      "icon": "<path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z\"></path>",
+      "showArrow": true
+    },
+    {
+      "step": "02",
+      "title": "AI 면접 시작",
+      "description": "AI 면접관이 맞춤형 질문을 시작합니다",
+      "icon": "<path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z\"></path>",
+      "showArrow": true
+    },
+    {
+      "step": "03",
+      "title": "피드백 받기",
+      "description": "상세한 분석과 개선점을 확인하세요",
+      "icon": "<path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z\"></path>",
+      "showArrow": false
+    }
+  ],
+  "testimonials": [
+    {
+      "name": "김민수",
+      "role": "소프트웨어 개발자",
+      "content": "실제 면접보다 더 까다로운 질문들로 연습할 수 있어서 실전에서 자신감이 생겼어요.",
+      "rating": 5,
+      "stars": [
+        1,
+        1,
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "name": "이지은",
+      "role": "마케팅 매니저",
+      "content": "AI 피드백이 정말 정확해요. 제가 놓치고 있던 부분들을 콕콕 짚어주더라고요.",
+      "rating": 5,
+      "stars": [
+        1,
+        1,
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "name": "박철호",
+      "role": "프로젝트 매니저",
+      "content": "바쁜 일정 중에도 언제든지 연습할 수 있어서 정말 편리합니다.",
+      "rating": 5,
+      "stars": [
+        1,
+        1,
+        1,
+        1,
+        1
+      ]
+    }
+  ]
+}

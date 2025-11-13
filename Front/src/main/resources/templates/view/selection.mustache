@@ -1,0 +1,91 @@
+{{>layout/header}}
+<div class="h-20 md:h-24"></div>
+
+<main class="container mx-auto px-6 py-20">
+    <div class="text-center mb-16 fade-in"><h1 class="text-4xl md:text-5xl font-bold text-gray-800 mb-6"> 어떤 서비스를
+        이용하시겠어요? </h1>
+        <p class="text-xl text-gray-600 max-w-3xl mx-auto"> AI 기반 서류 피드백과 면접 연습 중에서 원하시는 서비스를 선택해주세요 </p></div>
+    <div class="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto"> <!-- 서류 피드백 카드 (분홍색) -->
+        <div class="bg-gradient-to-br from-pink-300 to-pink-400 rounded-3xl p-8 shadow-lg transition-all group cursor-pointer fade-in">
+            <div class="text-center">
+                <div class="w-24 h-24 bg-white bg-opacity-20 rounded-3xl flex items-center justify-center mx-auto mb-6 hover-scale transition-transform">
+                    <svg class="w-12 h-12 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                    </svg>
+                </div>
+                <h2 class="text-2xl font-bold text-white mb-4">서류 피드백</h2>
+                <p class="text-pink-100 mb-8 leading-relaxed"> 이력서와 자기소개서를 AI가 분석하여<br> 전문적인 피드백과 개선 방안을 제공합니다 </p>
+                <div class="space-y-3 mb-8">
+                    <div class="flex items-center text-pink-100">
+                        <svg class="w-5 h-5 text-white mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                  d="M5 13l4 4L19 7"></path>
+                        </svg>
+                        <span>AI 기반 서류 분석</span></div>
+                    <div class="flex items-center text-pink-100">
+                        <svg class="w-5 h-5 text-white mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                  d="M5 13l4 4L19 7"></path>
+                        </svg>
+                        <span>맞춤형 개선 제안</span></div>
+                    <div class="flex items-center text-pink-100">
+                        <svg class="w-5 h-5 text-white mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                  d="M5 13l4 4L19 7"></path>
+                        </svg>
+                        <span>업계별 맞춤 분석</span></div>
+                </div>
+                <button class="w-full bg-white text-pink-400 hover:text-pink-500 py-4 rounded-2xl text-lg font-semibold hover:bg-pink-50 transition-all group-hover:scale-105 shadow-lg"
+                        onclick="location.href='/document-feedback'"> 서류 피드백 받기
+                    <svg class="w-5 h-5 inline-block ml-2 hover-translate transition-transform" fill="none"
+                         stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M17 8l4 4m0 0l-4 4m4-4H3"></path>
+                    </svg>
+                </button>
+            </div>
+        </div> <!-- 면접 연습하기 카드 (연두색) -->
+        <div class="bg-gradient-to-br from-green-300 to-green-400 rounded-3xl p-8 shadow-lg hover:shadow-2xl transition-all group cursor-pointer fade-in-delay transform hover:scale-105">
+            <div class="text-center">
+                <div class="w-24 h-24 bg-white bg-opacity-20 rounded-3xl flex items-center justify-center mx-auto mb-6 hover-scale transition-transform">
+                    <svg class="w-12 h-12 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+                    </svg>
+                </div>
+                <h2 class="text-2xl font-bold text-white mb-4">면접 연습하기</h2>
+                <p class="text-green-100 mb-8 leading-relaxed"> 실제 면접관처럼 질문하는 AI와 함께<br> 실전같은 면접 연습을 경험해보세요 </p>
+                <div class="space-y-3 mb-8">
+                    <div class="flex items-center text-green-100">
+                        <svg class="w-5 h-5 text-white mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                  d="M5 13l4 4L19 7"></path>
+                        </svg>
+                        <span>실시간 AI 면접관</span></div>
+                    <div class="flex items-center text-green-100">
+                        <svg class="w-5 h-5 text-white mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                  d="M5 13l4 4L19 7"></path>
+                        </svg>
+                        <span>맞춤형 질문 생성</span></div>
+                    <div class="flex items-center text-green-100">
+                        <svg class="w-5 h-5 text-white mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                  d="M5 13l4 4L19 7"></path>
+                        </svg>
+                        <span>상세한 피드백</span></div>
+                </div>
+                <button class="w-full bg-white text-green-400 hover:text-green-500 py-4 rounded-2xl text-lg font-semibold hover:bg-green-50 transition-all group-hover:scale-105 shadow-lg"
+                        onclick="location.href='/interview-practice'"> 면접 연습 시작
+                    <svg class="w-5 h-5 inline-block ml-2 hover-translate transition-transform" fill="none"
+                         stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M17 8l4 4m0 0l-4 4m4-4H3"></path>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </div>
+</main>
+<script src="/js/main.js"></script> </body> </html>

@@ -18,6 +18,8 @@ class Interview(Base):
     user = relationship("User")
     resume = relationship("Resume")
     questions = relationship("Question", back_populates="interview", cascade="all, delete-orphan")
+    video_analysis = relationship("VideoAnalysis", back_populates="interview", uselist=False, cascade="all, delete-orphan")
+
 
 
 class Question(Base):

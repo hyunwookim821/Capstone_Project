@@ -1,0 +1,186 @@
+{{>layout/header}}
+
+<div class="h-20 md:h-24"></div>
+
+<!-- Gradient defs (아이콘/화살표 공용) -->
+<svg aria-hidden="true" style="position:absolute;width:0;height:0;overflow:hidden">
+    <defs>
+        <linearGradient id="uiGradient" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%"  stop-color="var(--grad-start)"/>
+            <stop offset="100%" stop-color="var(--grad-end)"/>
+        </linearGradient>
+    </defs>
+</svg>
+
+<!-- Hero Section -->
+<section class="relative overflow-hidden py-20">
+    <!-- Blue Background Area -->
+    <div class="w-full gradient-bg py-16 mb-16 relative overflow-hidden fade-in">
+        <!-- Background decoration -->
+        <div class="absolute inset-0 overflow-hidden pointer-events-none">
+            <div class="bg-decoration bg-decoration-1"></div>
+            <div class="bg-decoration bg-decoration-2"></div>
+        </div>
+
+        <!-- Content Container -->
+        <div class="container mx-auto px-6 text-center relative z-10">
+            <h1 class="text-2xl md:text-3xl font-bold text-white mb-6 leading-tight">
+                AI와 함께하는
+                <span class="gradient-text"><br/>완벽한 면접 연습</span>
+            </h1>
+            <p class="text-blue-100 mb-8 max-w-3xl mx-auto leading-relaxed text-base">
+                실제 면접관처럼 질문하고 피드백하는 AI 시스템으로
+                언제 어디서나 실전같은 면접 연습을 경험하세요
+            </p>
+
+            <div class="flex justify-center fade-in-delay">
+                <button class="group bg-white px-8 py-4 rounded-full text-lg font-semibold hover-shadow transition-all flex items-center space-x-2" onclick="location.href='/selection'">
+                    <!-- 왼쪽 아이콘: 그라데이션 -->
+                    <svg class="w-5 h-5" viewBox="0 0 24 24" aria-hidden="true">
+                        <path fill="url(#uiGradient)" stroke="url(#uiGradient)" d="M8 5v14l11-7z"/>
+                    </svg>
+
+                    <!-- 텍스트: 그라데이션 -->
+                    <span class="text-gradient">지금 시작하기</span>
+
+                    <!-- 오른쪽 아이콘: 그라데이션 선 -->
+                    <svg class="w-5 h-5 hover-translate transition-transform" viewBox="0 0 24 24" aria-hidden="true">
+                        <path fill="none" stroke="url(#uiGradient)" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M17 8l4 4m0 0l-4 4m4-4H3"/>
+                    </svg>
+                </button>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Stats -->
+    <div class="container mx-auto px-6">
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-8 max-w-4xl mx-auto fade-in-delay-2">
+            {{#stats}}
+                <div class="text-center">
+                    <div class="text-3xl md:text-4xl font-bold text-gray-800 mb-2">{{number}}</div>
+                    <div class="text-gray-600">{{label}}</div>
+                </div>
+            {{/stats}}
+        </div>
+    </div>
+</section>
+
+<!-- Features Section -->
+<section id="features" class="py-20 bg-gray-50">
+    <div class="container mx-auto px-6">
+        <div class="text-center mb-16 fade-in">
+            <h2 class="text-4xl md:text-5xl font-bold text-gray-800 mb-6">왜 면접 시뮬레이터인가요?</h2>
+            <p class="text-xl text-gray-600 max-w-3xl mx-auto">
+                최신 AI 기술로 실제 면접 환경을 완벽하게 재현하여
+                효과적인 면접 준비를 도와드립니다
+            </p>
+        </div>
+
+        <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+            {{#features}}
+                <div class="bg-white rounded-2xl p-8 hover-shadow transition-all group fade-in">
+                    <div class="w-16 h-16 gradient-icon rounded-2xl flex items-center justify-center mb-6 hover-scale transition-transform">
+                        <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                            {{{icon}}}
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-bold text-gray-800 mb-4">{{title}}</h3>
+                    <p class="text-gray-600 leading-relaxed">{{description}}</p>
+                </div>
+            {{/features}}
+        </div>
+    </div>
+</section>
+
+<!-- How It Works -->
+<section class="py-20">
+    <div class="container mx-auto px-6">
+        <div class="text-center mb-16 fade-in">
+            <h2 class="text-4xl md:text-5xl font-bold text-gray-800 mb-6">이렇게 간단해요</h2>
+        </div>
+
+        <div class="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+            {{#steps}}
+                <div class="text-center relative fade-in">
+                    <div class="w-20 h-20 gradient-icon rounded-full flex items-center justify-center mx-auto mb-6">
+                        <svg class="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                            {{{icon}}}
+                        </svg>
+                    </div>
+                    <div class="text-sm font-bold text-blue-600 mb-2">{{step}}</div>
+                    <h3 class="text-2xl font-bold text-gray-800 mb-4">{{title}}</h3>
+                    <p class="text-gray-600">{{description}}</p>
+
+                    {{#showArrow}}
+                        <div class="hidden md:block absolute top-10 left-full w-full">
+                            <svg class="w-6 h-6 text-gray-400 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                      d="M17 8l4 4m0 0l-4 4m4-4H3"></path>
+                            </svg>
+                        </div>
+                    {{/showArrow}}
+                </div>
+            {{/steps}}
+        </div>
+    </div>
+</section>
+
+<!-- Testimonials -->
+<section id="testimonials" class="py-20 bg-gray-50">
+    <div class="container mx-auto px-6">
+        <div class="text-center mb-16 fade-in">
+            <h2 class="text-4xl md:text-5xl font-bold text-gray-800 mb-6">사용자들의 이야기</h2>
+        </div>
+
+        <div class="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+            {{#testimonials}}
+                <div class="bg-white rounded-2xl p-8 shadow-sm fade-in">
+                    <div class="flex mb-4">
+                        {{#stars}}
+                            <svg class="w-5 h-5 text-yellow-400 fill-current" viewBox="0 0 24 24" aria-hidden="true">
+                                <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                            </svg>
+                        {{/stars}}
+                    </div>
+                    <p class="text-gray-600 mb-6 leading-relaxed">"{{content}}"</p>
+                    <div>
+                        <div class="font-bold text-gray-800">{{name}}</div>
+                        <div class="text-gray-500 text-sm">{{role}}</div>
+                    </div>
+                </div>
+            {{/testimonials}}
+        </div>
+    </div>
+</section>
+
+<!-- CTA Section -->
+<section class="py-20">
+    <div class="container mx-auto px-6 text-center">
+        <div class="max-w-4xl mx-auto fade-in">
+            <h2 class="text-4xl md:text-5xl font-bold text-gray-800 mb-6">지금 바로 시작하세요</h2>
+            <p class="text-xl text-gray-600 mb-8">
+                무료로 면접 연습을 시작하고 꿈의 직장에 한 걸음 더 가까워지세요
+            </p>
+            <button class="group gradient-button text-white px-12 py-4 rounded-full text-xl font-semibold hover-shadow transition-all flex items-center space-x-3 mx-auto">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                </svg>
+                <span>무료로 시작하기</span>
+                <svg class="w-6 h-6 hover-translate transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M17 8l4 4m0 0l-4 4m4-4H3"></path>
+                </svg>
+            </button>
+        </div>
+    </div>
+</section>
+
+{{>layout/footer}}
+
+<!-- Custom JS -->
+<script src="/js/page.js"></script>
+</body>
+</html>

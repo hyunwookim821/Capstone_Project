@@ -1,0 +1,109 @@
+{{>layout/header}}
+<div class="h-20 md:h-24"></div>
+
+<!-- Main Content -->
+<main class="container mx-auto px-6 py-12">
+    <div class="text-center mb-12 fade-in">
+        <div class="w-20 h-20 bg-gradient-to-br from-blue-400 to-purple-400 rounded-3xl flex items-center justify-center mx-auto mb-6">
+            <svg class="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+            </svg>
+        </div>
+        <h1 class="text-4xl md:text-5xl font-bold text-gray-800 mb-6">
+            AI 서류 피드백
+        </h1>
+        <p class="text-xl text-gray-600 max-w-3xl mx-auto">
+            이력서와 자기소개서를 업로드하면 AI가 전문적인 분석과 개선 방안을 제공합니다
+        </p>
+    </div>
+
+    <div class="max-w-4xl mx-auto">
+        <!-- 업로드 섹션 -->
+        <div class="bg-white rounded-3xl p-8 shadow-lg mb-8 fade-in">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6">서류 업로드</h2>
+
+            <div class="grid md:grid-cols-2 gap-6">
+                <!-- 이력서 업로드 -->
+                <div class="border-2 border-dashed border-blue-300 rounded-2xl p-8 text-center hover:border-blue-400 transition-colors">
+                    <div class="w-16 h-16 bg-blue-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                        <svg class="w-8 h-8 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
+                        </svg>
+                    </div>
+                    <h3 class="text-lg font-semibold text-gray-800 mb-2">이력서</h3>
+                    <p class="text-gray-600 mb-4">PDF, DOC, DOCX 파일을 업로드해주세요</p>
+                    <input type="file" id="resume" accept=".pdf,.doc,.docx" class="hidden">
+                    <label for="resume" class="bg-blue-400 text-white px-6 py-3 rounded-xl hover:bg-blue-500 transition-colors cursor-pointer inline-block">
+                        파일 선택
+                    </label>
+                </div>
+
+                <!-- 자기소개서 업로드 -->
+                <div class="border-2 border-dashed border-blue-300 rounded-2xl p-8 text-center hover:border-blue-400 transition-colors">
+                    <div class="w-16 h-16 bg-blue-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                        <svg class="w-8 h-8 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path>
+                        </svg>
+                    </div>
+                    <h3 class="text-lg font-semibold text-gray-800 mb-2">자기소개서</h3>
+                    <p class="text-gray-600 mb-4">PDF, DOC, DOCX 파일을 업로드해주세요</p>
+                    <input type="file" id="coverletter" accept=".pdf,.doc,.docx" class="hidden">
+                    <label for="coverletter" class="bg-blue-400 text-white px-6 py-3 rounded-xl hover:bg-blue-500 transition-colors cursor-pointer inline-block">
+                        파일 선택
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <!-- 분석 옵션 -->
+        <div class="bg-white rounded-3xl p-8 shadow-lg mb-8 fade-in-delay">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6">분석 옵션</h2>
+
+            <div class="grid md:grid-cols-3 gap-4">
+                <div class="bg-blue-50 rounded-2xl p-6 text-center">
+                    <div class="w-12 h-12 bg-blue-400 rounded-xl flex items-center justify-center mx-auto mb-3">
+                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+                        </svg>
+                    </div>
+                    <h3 class="font-semibold text-gray-800 mb-2">기본 분석</h3>
+                    <p class="text-gray-600 text-sm">구조, 내용, 문법 검토</p>
+                </div>
+
+                <div class="bg-blue-50 rounded-2xl p-6 text-center">
+                    <div class="w-12 h-12 bg-blue-400 rounded-xl flex items-center justify-center mx-auto mb-3">
+                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                        </svg>
+                    </div>
+                    <h3 class="font-semibold text-gray-800 mb-2">심화 분석</h3>
+                    <p class="text-gray-600 text-sm">키워드 최적화, 경쟁력 분석</p>
+                </div>
+
+                <div class="bg-blue-50 rounded-2xl p-6 text-center">
+                    <div class="w-12 h-12 bg-blue-400 rounded-xl flex items-center justify-center mx-auto mb-3">
+                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
+                        </svg>
+                    </div>
+                    <h3 class="font-semibold text-gray-800 mb-2">업계별 분석</h3>
+                    <p class="text-gray-600 text-sm">업계 특성에 맞춘 맞춤 분석</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 분석 시작 버튼 -->
+        <div class="text-center fade-in-delay-2">
+            <button class="bg-gradient-to-r from-blue-400 to-purple-400 text-white px-12 py-4 rounded-2xl text-lg font-semibold hover:from-blue-500 hover:to-purple-500 transition-all transform hover:scale-105 shadow-lg">
+                AI 분석 시작하기
+                <svg class="w-5 h-5 inline-block ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path>
+                </svg>
+            </button>
+        </div>
+    </div>
+</main>
+
+<script src="/js/main.js"></script>
+</body>
+</html>

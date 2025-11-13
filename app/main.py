@@ -38,3 +38,13 @@ def read_root():
 
 
 app.include_router(api_router, prefix="/api/v1")
+
+# Add diagnostic code to print all registered routes
+from fastapi.routing import APIRoute
+
+print("--- Registered API Routes ---")
+for route in app.routes:
+    if isinstance(route, APIRoute):
+        print(f"Path: {route.path}, Name: {route.name}, Methods: {route.methods}")
+print("-----------------------------")
+

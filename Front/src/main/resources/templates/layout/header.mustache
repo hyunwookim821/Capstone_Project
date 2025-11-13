@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>면접 시뮬레이터 - AI와 함께하는 완벽한 면접 연습</title>
+
+    <script src="/js/page.js"></script>
+
+    <!-- Tailwind (CDN) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/css/page.css">
+</head>
+
+<body class="min-h-screen bg-white">
+
+<header class="fixed top-0 inset-x-0 z-50 bg-white border-b border-gray-200/60 shadow-sm">
+    <nav class="container mx-auto px-6 py-4 flex items-center justify-between">
+        <!-- 기존: <div class="flex items-center space-x-3 fade-in"> ... </div> -->
+        <a href="/" class="flex items-center space-x-3 group focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded-lg"
+           aria-label="홈으로 이동">
+            <div class="w-10 h-10 gradient-icon rounded-lg flex items-center justify-center">
+                <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
+                </svg>
+            </div>
+            <span class="text-2xl font-bold text-gray-800 group-hover:underline">면접 시뮬레이터</span>
+        </a>
+
+        <div class="hidden md:flex items-center space-x-8">
+            {{#isLoggedIn}}
+                <span class="text-gray-700">{{nickname}}님 환영합니다.</span>
+                <a href="/myPage" class="text-gray-600 hover:text-gray-800 transition-colors">마이페이지</a>
+                <form action="/auth/logout" method="post" class="inline">
+                    <input type="hidden" name="{{_csrf.parameterName}}" value="{{_csrf.token}}">
+                    <button type="submit" class="text-gray-600 hover:text-gray-800 transition-colors">로그아웃</button>
+                </form>
+            {{/isLoggedIn}}
+
+            {{^isLoggedIn}}
+                <a href="/auth/login" class="text-gray-600 hover:text-gray-800 transition-colors">로그인</a>
+                <a href="/auth/signup" class="text-gray-600 hover:text-gray-800 transition-colors">회원가입</a>
+                <a href="/start" class="gradient-button text-white px-6 py-2 rounded-full hover-shadow transition-all">시작하기</a>
+            {{/isLoggedIn}}
+        </div>
+    </nav>
+</header>

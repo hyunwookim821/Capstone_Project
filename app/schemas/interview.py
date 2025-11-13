@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 from datetime import datetime
-from typing import Optional, List
+from typing import Optional, List, Dict, Any
 
 # Schema for Question
 class QuestionBase(BaseModel):
@@ -59,3 +59,6 @@ class InterviewSession(BaseModel):
 
 class QuestionList(BaseModel):
     questions: List[str]
+
+class VideoAnalysisRequest(BaseModel):
+    landmarks: List[Dict[str, Any]]

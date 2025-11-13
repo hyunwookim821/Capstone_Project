@@ -1,0 +1,78 @@
+/* 공통 컬러 변수 */
+:root{
+  --grad-start:#91c5ff; /* blue-300 */
+  --grad-end:#c081ff;   /* purple-400 */
+}
+
+/* 대형 배경(히어로 섹션) — 퍼짐 크게: 시작색 비중 ↑ */
+.gradient-bg{
+  background: linear-gradient(135deg,
+    var(--grad-start) 0%,
+    var(--grad-start) 38%,
+    var(--grad-end) 100%
+  );
+}
+
+.gradient-button {
+    background: linear-gradient(135deg, #60a5fa 0%, #a855f7 100%);
+}
+
+/* 아이콘(작은 면적) — 퍼짐 작게: 전환 빠르게 */
+.gradient-icon{
+  background: linear-gradient(135deg,
+    var(--grad-start) 0%,
+    var(--grad-end) 78%
+  );
+}
+
+/* 버튼 — 원래 로그인 버튼과 동일한 퍼짐 */
+.gradient-button{
+  background: linear-gradient(135deg,
+    var(--grad-start) 0%,
+    var(--grad-end) 100%
+  );
+}
+
+/* 텍스트 그라데이션 */
+.text-gradient {
+  background: linear-gradient(135deg, var(--grad-start), var(--grad-end));
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+}
+
+/* 어두운 텍스트 그라데이션 */
+.gradient-text {
+  background: linear-gradient(135deg, #dfecfe 0%, #ebd9ff 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* 기존 효과 유지 */
+.fade-in{ animation: fadeIn .8s ease-out; }
+.fade-in-delay{ animation: fadeIn .8s ease-out .2s both; }
+.fade-in-delay-2{ animation: fadeIn .8s ease-out .4s both; }
+@keyframes fadeIn{ from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
+.hover-scale:hover{ transform:scale(1.1); }
+.hover-shadow:hover{ box-shadow:0 25px 50px -12px rgba(0,0,0,.25); }
+.hover-translate:hover{ transform:translateX(4px); }
+
+.bg-decoration{ position:absolute; pointer-events:none; }
+.bg-decoration-1{
+  top:25%; left:25%; width:16rem; height:16rem;
+  background: rgba(255,255,255,.10); border-radius:50%; filter:blur(3rem);
+}
+.bg-decoration-2{
+  top:75%; right:25%; width:24rem; height:24rem;
+  background: rgba(192,132,252,.20); border-radius:50%; filter:blur(3rem);
+}
+
+.white-80 {
+  background: none !important;
+  -webkit-background-clip: initial !important;
+  background-clip: initial !important;
+  -webkit-text-fill-color: rgba(255,255,255,0.9) !important;
+  color: rgba(255,255,255,0.8) !important;
+}
