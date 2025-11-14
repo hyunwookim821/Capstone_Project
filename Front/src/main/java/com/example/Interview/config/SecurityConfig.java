@@ -17,6 +17,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(authz -> authz
                         .anyRequest().permitAll() // Allow all requests
                 )
+                .csrf(AbstractHttpConfigurer::disable) // Disable CSRF
                 .formLogin(AbstractHttpConfigurer::disable) // Disable form login
                 .logout(AbstractHttpConfigurer::disable); // Disable logout
 

@@ -189,7 +189,7 @@
                             <div class="grid md:grid-cols-2 gap-6">
                                 <div>
                                     <label class="block text-sm font-semibold text-gray-700 mb-2">이름 *</label>
-                                    <input type="text" name="name" id="edit_name" required
+                                    <input type="text" name="user_name" id="edit_name" required
                                            class="input-field w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:outline-none"
                                            placeholder="홍길동">
                                 </div>
@@ -350,9 +350,9 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
                         </svg>
                         <p class="text-gray-500 text-lg">등록된 자소서가 없습니다.</p>
-                        <button class="gradient-button text-white px-6 py-3 rounded-lg font-semibold hover-shadow transition-all mt-6">
+                        <a href="/document-feedback" class="inline-block gradient-button text-white px-6 py-3 rounded-lg font-semibold hover-shadow transition-all mt-6">
                             자소서 등록하기
-                        </button>
+                        </a>
                     </div>
                 </div>
             </div>
@@ -402,22 +402,18 @@
 </footer>
 
 <script>
-    // Sample user data
-    const userData = {
-        name: "홍길동",
-        email: "hong@example.com",
-        phone: "010-1234-5678",
-        birthdate: "1990-01-01",
-        desired_position: "프론트엔드 개발자",
-        desired_industry: "IT/소프트웨어",
-        career_years: "3-5년",
-        career_description: "React 기반 웹 애플리케이션 개발 경험 3년\n주요 프로젝트: 전자상거래 플랫폼 프론트엔드 개발",
-        education: "대학교 졸업",
-        major: "컴퓨터공학",
-        skills: "JavaScript, React, TypeScript, HTML/CSS\n정보처리기사",
-        introduction: "열정적인 프론트엔드 개발자로 사용자 경험을 최우선으로 생각합니다.",
-        interview_goal: "대기업 프론트엔드 개발자 포지션 합격을 목표로 면접 실력을 향상시키고 싶습니다."
-    };
+    let currentUserData = JSON.parse('{{{userJson}}}');
+    const authToken = "{{token}}";
+
+    // Helper to format date
+    function formatDate(dateString) {
+        if (!dateString) return '';
+        const date = new Date(dateString);
+        // Adjust for timezone offset to prevent date from changing
+        const offset = date.getTimezoneOffset();
+        const adjustedDate = new Date(date.getTime() - (offset*60*1000));
+        return adjustedDate.toISOString().split('T')[0]; // YYYY-MM-DD
+    }
 
     // Show section based on menu selection
     function showSection(sectionName) {
@@ -461,52 +457,94 @@
         if (viewMode.classList.contains('hidden')) {
             viewMode.classList.remove('hidden');
             editMode.classList.add('hidden');
-            loadViewData();
+            loadViewData(currentUserData);
         } else {
             viewMode.classList.add('hidden');
             editMode.classList.remove('hidden');
-            loadEditData();
+            loadEditData(currentUserData);
         }
     }
 
     // Load data into view mode
-    function loadViewData() {
-        for (const [key, value] of Object.entries(userData)) {
-            const element = document.getElementById('view_' + key);
-            if (element) {
-                element.textContent = value || '-';
-            }
-        }
+    function loadViewData(data) {
+        document.getElementById('view_name').textContent = data.user_name || '-';
+        document.getElementById('view_email').textContent = data.email || '-';
+        document.getElementById('view_phone').textContent = data.phone || '-';
+        document.getElementById('view_birthdate').textContent = data.birthdate ? formatDate(data.birthdate) : '-';
+        document.getElementById('view_desired_position').textContent = data.desired_position || '-';
+        document.getElementById('view_desired_industry').textContent = data.desired_industry || '-';
+        document.getElementById('view_career_years').textContent = data.career_years || '-';
+        document.getElementById('view_career_description').textContent = data.career_description || '-';
+        document.getElementById('view_education').textContent = data.education || '-';
+        document.getElementById('view_major').textContent = data.major || '-';
+        document.getElementById('view_skills').textContent = data.skills || '-';
+        document.getElementById('view_introduction').textContent = data.introduction || '-';
+        document.getElementById('view_interview_goal').textContent = data.interview_goal || '-';
     }
 
     // Load data into edit mode
-    function loadEditData() {
-        for (const [key, value] of Object.entries(userData)) {
-            const element = document.getElementById('edit_' + key);
-            if (element) {
-                element.value = value || '';
-            }
-        }
+    function loadEditData(data) {
+        document.getElementById('edit_name').value = data.user_name || '';
+        document.getElementById('edit_email').value = data.email || '';
+        document.getElementById('edit_phone').value = data.phone || '';
+        document.getElementById('edit_birthdate').value = data.birthdate ? formatDate(data.birthdate) : '';
+        document.getElementById('edit_desired_position').value = data.desired_position || '';
+        document.getElementById('edit_desired_industry').value = data.desired_industry || '';
+        document.getElementById('edit_career_years').value = data.career_years || '';
+        document.getElementById('edit_career_description').value = data.career_description || '';
+        document.getElementById('edit_education').value = data.education || '';
+        document.getElementById('edit_major').value = data.major || '';
+        document.getElementById('edit_skills').value = data.skills || '';
+        document.getElementById('edit_introduction').value = data.introduction || '';
+        document.getElementById('edit_interview_goal').value = data.interview_goal || '';
     }
 
     // Handle form submission
-    document.getElementById('profileForm').addEventListener('submit', function(e) {
+    document.getElementById('profileForm').addEventListener('submit', async function(e) {
         e.preventDefault();
 
         const formData = new FormData(this);
         const data = Object.fromEntries(formData.entries());
 
-        Object.assign(userData, data);
-        console.log('Updated profile data:', userData);
+        // Convert empty strings to null for optional fields
+        for (const key in data) {
+            if (data[key] === '') {
+                data[key] = null;
+            }
+        }
 
-        alert('프로필이 성공적으로 저장되었습니다!');
+        try {
+            const response = await fetch('/api/my-page/profile', {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + authToken
+                },
+                body: JSON.stringify(data),
+            });
 
-        toggleEditMode();
+            if (response.ok) {
+                const updatedUser = await response.json();
+                currentUserData = updatedUser; // Update local data
+                alert('프로필이 성공적으로 저장되었습니다!');
+                toggleEditMode(); // Switch back to view mode
+            } else {
+                const errorData = await response.json();
+                alert('프로필 저장 실패: ' + (errorData.message || '알 수 없는 오류가 발생했습니다.'));
+            }
+        } catch (error) {
+            console.error('Profile update error:', error);
+            alert('프로필 저장 중 오류가 발생했습니다.');
+        }
     });
 
     // Initialize page
     document.addEventListener('DOMContentLoaded', function() {
-        loadViewData();
+        
+
+        if (currentUserData) {
+            loadViewData(currentUserData);
+        }
 
         const fadeElements = document.querySelectorAll('.fade-in');
         fadeElements.forEach((el, index) => {
@@ -516,5 +554,3 @@
         });
     });
 </script>
-</body>
-</html>

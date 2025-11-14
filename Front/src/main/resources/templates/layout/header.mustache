@@ -34,10 +34,29 @@
             {{#isLoggedIn}}
                 <span class="text-gray-700">{{nickname}}님 환영합니다.</span>
                 <a href="/myPage" class="text-gray-600 hover:text-gray-800 transition-colors">마이페이지</a>
-                <form action="/auth/logout" method="post" class="inline">
-                    <input type="hidden" name="{{_csrf.parameterName}}" value="{{_csrf.token}}">
-                    <button type="submit" class="text-gray-600 hover:text-gray-800 transition-colors">로그아웃</button>
-                </form>
+                <button type="button" onclick="handleLogout()" class="text-gray-600 hover:text-gray-800 transition-colors">로그아웃</button>
+                <script>
+                    async function handleLogout() {
+                        try {
+                            const response = await fetch('/api/auth/logout', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json'
+                                }
+                            });
+
+                            if (response.ok) {
+                                window.location.href = '/'; // Redirect to main page
+                            } else {
+                                const errorData = await response.json();
+                                alert('로그아웃 실패: ' + (errorData.message || '알 수 없는 오류가 발생했습니다.'));
+                            }
+                        } catch (error) {
+                            console.error('Logout error:', error);
+                            alert('로그아웃 중 오류가 발생했습니다.');
+                        }
+                    }
+                </script>
             {{/isLoggedIn}}
 
             {{^isLoggedIn}}

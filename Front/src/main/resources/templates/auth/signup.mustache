@@ -34,9 +34,7 @@
 
         <!-- Signup Form -->
         <div class="bg-white border border-gray-200 rounded-2xl shadow-lg p-8">
-            <form action="/auth/signup" method="POST" id="signupForm">
-                <!-- CSRF Token -->
-                <input type="hidden" name="{{_csrf.parameterName}}" value="{{_csrf.token}}">
+            <form id="signupForm">
 
                 <div class="space-y-6">
                     <!-- Nickname Field -->
@@ -185,10 +183,11 @@
 </div>
 
 <script>
-    // Form validation
-    document.getElementById('signupForm').addEventListener('submit', function(e) {
-        let isValid = true;
+    document.getElementById('signupForm').addEventListener('submit', async function(e) {
+        e.preventDefault(); // Prevent default form submission
 
+        let isValid = true;
+        // (Client-side validation logic remains the same...)
         // Reset all error messages
         document.querySelectorAll('.text-red-500').forEach(el => el.classList.add('hidden'));
 
@@ -229,10 +228,40 @@
         }
 
         if (!isValid) {
-            e.preventDefault();
+            return;
+        }
+
+        const formData = new FormData(this);
+        const data = Object.fromEntries(formData.entries());
+
+        // Convert checkbox values from "on" to true/false
+        data.terms = document.getElementById('terms').checked;
+        data.marketing = document.getElementById('marketing').checked;
+
+        try {
+            const response = await fetch('/api/auth/signup', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(data),
+            });
+
+            if (response.ok) {
+                alert('회원가입이 완료되었습니다. 로그인 페이지로 이동합니다.');
+                window.location.href = '/auth/login';
+            } else {
+                const errorData = await response.json();
+                // Display server-side error message
+                alert('회원가입 실패: ' + (errorData.message || '알 수 없는 오류가 발생했습니다.'));
+            }
+        } catch (error) {
+            console.error('Signup error:', error);
+            alert('회원가입 중 오류가 발생했습니다.');
         }
     });
 
+    // (Real-time validation logic remains the same...)
     // Real-time nickname validation
     document.getElementById('nickname').addEventListener('input', function() {
         const nickname = this.value;

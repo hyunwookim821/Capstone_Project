@@ -1,5 +1,6 @@
 package com.example.Interview.controller;
 
+import jakarta.servlet.http.HttpSession;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -13,7 +14,7 @@ public class MainController {
 
     @GetMapping("/")
     public String main(Model model) {
-        // 통계 데이터
+        // This is just placeholder data for the main page UI
         List<Map<String, String>> stats = Arrays.asList(
                 Map.of("number", "10,000+", "label", "사용자"),
                 Map.of("number", "95%", "label", "만족도"),
@@ -21,7 +22,6 @@ public class MainController {
                 Map.of("number", "24/7", "label", "언제든 이용")
         );
 
-        // 기능 데이터
         List<Map<String, String>> features = Arrays.asList(
                 Map.of(
                         "icon", "<path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z\"></path>",
@@ -45,7 +45,6 @@ public class MainController {
                 )
         );
 
-        // 단계 데이터
         List<Map<String, Object>> steps = Arrays.asList(
                 Map.of(
                         "step", "STEP 01",
@@ -70,7 +69,6 @@ public class MainController {
                 )
         );
 
-        // 후기 데이터
         List<Map<String, Object>> testimonials = Arrays.asList(
                 Map.of(
                         "content", "면접 시뮬레이터 덕분에 실제 면접에서 긴장하지 않고 좋은 결과를 얻을 수 있었어요. 정말 실제 면접관과 대화하는 것 같았습니다!",
@@ -98,5 +96,14 @@ public class MainController {
         model.addAttribute("testimonials", testimonials);
 
         return "view/main";
+    }
+
+    @GetMapping("/start")
+    public String start(HttpSession session) {
+        if (session.getAttribute("token") != null) {
+            return "redirect:/selection";
+        } else {
+            return "redirect:/auth/login";
+        }
     }
 }
