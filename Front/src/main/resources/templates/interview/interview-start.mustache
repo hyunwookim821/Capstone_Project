@@ -1,0 +1,281 @@
+{{>layout/header}}
+<div class="h-20 md:h-24"></div>
+
+<main class="container mx-auto px-6 py-12">
+    <!-- 면접 준비 단계 -->
+    <div id="setup-step">
+        <div class="text-center mb-12">
+            <h1 class="text-4xl md:text-5xl font-bold text-gray-800 mb-6">AI 모의 면접</h1>
+            <p class="text-xl text-gray-600 max-w-3xl mx-auto">실제 면접처럼 AI와 대화하며 면접을 연습하세요.</p>
+        </div>
+
+        <div class="max-w-4xl mx-auto bg-white rounded-3xl p-8 shadow-lg">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6">면접 환경 설정</h2>
+            <div id="permissions-alert" class="hidden bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 mb-6" role="alert">
+                <p class="font-bold">권한 필요</p>
+                <p>모의 면접을 진행하려면 마이크와 카메라 접근 권한이 필요합니다. 브라우저의 권한 요청을 허용해주세요.</p>
+            </div>
+
+            <!-- 기기 설정 -->
+            <div class="space-y-6">
+                <div>
+                    <label for="video-source" class="block text-sm font-semibold text-gray-700 mb-2">카메라 선택</label>
+                    <select id="video-source" class="w-full p-3 border-2 border-gray-200 rounded-lg"></select>
+                    <p id="no-webcam-alert" class="hidden text-red-500 text-sm mt-2">웹캠을 찾을 수 없습니다. 음성으로만 면접이 진행됩니다.</p>
+                </div>
+                <div>
+                    <label for="audio-source" class="block text-sm font-semibold text-gray-700 mb-2">마이크 선택</label>
+                    <select id="audio-source" class="w-full p-3 border-2 border-gray-200 rounded-lg"></select>
+                </div>
+            </div>
+
+            <!-- 면접 시작 버튼 -->
+            <div class="text-center mt-10">
+                <button id="start-interview-btn" class="bg-gradient-to-r from-blue-500 to-purple-500 text-white px-12 py-4 rounded-2xl text-lg font-semibold hover:from-blue-600 hover:to-purple-600 transition-all transform hover:scale-105 shadow-lg">
+                    면접 시작하기
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 면접 진행 단계 (초기에는 숨김) -->
+    <div id="interview-step" class="hidden">
+        <div class="grid lg:grid-cols-3 gap-8">
+            <!-- 왼쪽: 질문 및 상태 -->
+            <div class="lg:col-span-1 bg-white rounded-3xl p-8 shadow-lg h-full">
+                <h2 class="text-2xl font-bold text-gray-800 mb-4">예상 면접 질문</h2>
+                <div id="question-display" class="p-4 bg-gray-100 rounded-lg min-h-[100px] text-lg text-gray-800">
+                    면접이 시작되면 여기에 질문이 표시됩니다.
+                </div>
+                <div class="mt-6">
+                    <p class="text-sm text-gray-600">질문 <span id="current-question-num">1</span> / <span id="total-question-num">{{questions.size}}</span></p>
+                    <div class="w-full bg-gray-200 rounded-full h-2.5 mt-2">
+                        <div id="progress-bar" class="bg-blue-600 h-2.5 rounded-full" style="width: 0%"></div>
+                    </div>
+                </div>
+                <div id="recording-indicator" class="hidden mt-6 flex items-center">
+                    <span class="relative flex h-3 w-3">
+                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                        <span class="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
+                    </span>
+                    <span class="ml-3 text-red-600 font-semibold">답변 녹화 중...</span>
+                </div>
+            </div>
+
+            <!-- 오른쪽: 웹캠 및 컨트롤 버튼 -->
+            <div class="lg:col-span-2 bg-black rounded-3xl p-4 shadow-lg relative">
+                <video id="user-video" class="w-full h-full rounded-2xl" autoplay muted playsinline></video>
+                <div class="absolute bottom-8 left-1/2 -translate-x-1/2">
+                    <button id="next-question-btn" class="bg-blue-500 text-white px-8 py-4 rounded-full text-lg font-semibold shadow-lg hover:bg-blue-600 transition-colors">
+                        다음 질문
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 질문 목록 (JavaScript에서 사용하기 위해 숨겨둠) -->
+    <div id="questions-data" class="hidden">
+        {{#questions}}
+        <div class="question">{{.}}</div>
+        {{/questions}}
+    </div>
+</main>
+
+<script>
+document.addEventListener('DOMContentLoaded', async () => {
+    // UI Elements
+    const setupStep = document.getElementById('setup-step');
+    const interviewStep = document.getElementById('interview-step');
+    const videoSelect = document.getElementById('video-source');
+    const audioSelect = document.getElementById('audio-source');
+    const startBtn = document.getElementById('start-interview-btn');
+    const userVideo = document.getElementById('user-video');
+    const questionDisplay = document.getElementById('question-display');
+    const recordingIndicator = document.getElementById('recording-indicator');
+    const nextQuestionBtn = document.getElementById('next-question-btn');
+    const permissionsAlert = document.getElementById('permissions-alert');
+    const noWebcamAlert = document.getElementById('no-webcam-alert');
+    const progressBar = document.getElementById('progress-bar');
+    const currentQuestionNumSpan = document.getElementById('current-question-num');
+    const totalQuestionNumSpan = document.getElementById('total-question-num');
+
+    // State
+    let mediaRecorder;
+    let recordedChunks = [];
+    let localStream;
+    let webSocket;
+    let interviewId;
+    let currentQuestionIndex = 0;
+
+    // 1. 초기화: 장치 목록 가져오기 및 권한 요청
+    async function init() {
+        try {
+            // 권한 요청
+            localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+            permissionsAlert.classList.add('hidden');
+            userVideo.srcObject = localStream;
+
+            // 장치 목록 가져오기
+            const devices = await navigator.mediaDevices.enumerateDevices();
+            const videoDevices = devices.filter(device => device.kind === 'videoinput');
+            const audioDevices = devices.filter(device => device.kind === 'audioinput');
+
+            if (videoDevices.length === 0) {
+                noWebcamAlert.classList.remove('hidden');
+            }
+
+            videoDevices.forEach(device => {
+                const option = document.createElement('option');
+                option.value = device.deviceId;
+                option.text = device.label || `Camera ${videoSelect.length + 1}`;
+                videoSelect.appendChild(option);
+            });
+
+            audioDevices.forEach(device => {
+                const option = document.createElement('option');
+                option.value = device.deviceId;
+                option.text = device.label || `Microphone ${audioSelect.length + 1}`;
+                audioSelect.appendChild(option);
+            });
+
+        } catch (err) {
+            console.error("Error accessing media devices.", err);
+            permissionsAlert.classList.remove('hidden');
+            startBtn.disabled = true;
+        }
+    }
+
+    // 2. 면접 시작 처리
+    startBtn.addEventListener('click', async () => {
+        try {
+            const resumeId = "{{resumeId}}";
+            const token = "{{token}}";
+
+            // (1) Front 서버를 거치지 않고, 백엔드 API 직접 호출 (CORS 문제가 없다면 가능)
+            // 여기서는 Front의 API를 호출하는 것으로 가정하고, Front의 API가 백엔드를 호출하도록 합니다.
+            // 하지만 기존 InterviewApiController 구조에 맞추기 위해, Front의 API를 호출하는 방식을 사용합니다.
+            const response = await fetch(`/api/interviews?resume_id=${resumeId}`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+
+            if (!response.ok) throw new Error('Failed to create interview session.');
+            
+            const sessionData = await response.json();
+            interviewId = sessionData.interview_id;
+
+            // (2) UI 전환
+            setupStep.classList.add('hidden');
+            interviewStep.classList.remove('hidden');
+
+            // (3) 웹소켓 연결
+            const wsUrl = `ws://127.0.0.1:8000/api/v1/interviews/ws/${interviewId}?token=${token}`;
+            webSocket = new WebSocket(wsUrl);
+            setupWebSocketHandlers();
+
+        } catch (error) {
+            console.error("Failed to start interview:", error);
+            alert("면접 세션을 시작하는 데 실패했습니다.");
+        }
+    });
+
+    // 3. 웹소켓 핸들러 설정
+    function setupWebSocketHandlers() {
+        webSocket.onopen = () => console.log("WebSocket connection established.");
+        webSocket.onclose = () => console.log("WebSocket connection closed.");
+        webSocket.onerror = (err) => console.error("WebSocket error:", err);
+
+        webSocket.onmessage = (event) => {
+            if (event.data instanceof Blob) {
+                // 질문 오디오 재생
+                const audioUrl = URL.createObjectURL(event.data);
+                const audio = new Audio(audioUrl);
+                audio.play();
+                audio.onended = startRecording; // 오디오 재생 끝나면 녹화 시작
+            } else {
+                const message = JSON.parse(event.data);
+                handleWebSocketMessage(message);
+            }
+        };
+    }
+
+    // 4. 웹소켓 메시지 처리
+    function handleWebSocketMessage(message) {
+        console.log("Received message:", message);
+        if (message.type === 'question') {
+            questionDisplay.textContent = message.text;
+            currentQuestionIndex = message.question_number;
+            updateProgress();
+        } else if (message.type === 'system' && message.status === 'finished') {
+            alert('면접이 종료되었습니다. 분석 결과 페이지로 이동합니다.');
+            // TODO: 결과 페이지로 이동
+            window.location.href = `/interview/${interviewId}/results`;
+        }
+    }
+
+    // 5. 녹화 시작
+    function startRecording() {
+        console.log("Starting recording...");
+        recordedChunks = [];
+        const options = { mimeType: 'audio/webm;codecs=opus' }; // 오디오만 녹음
+        
+        // 선택된 장치로 스트림 다시 설정
+        const audioSource = audioSelect.value;
+        const constraints = { audio: { deviceId: audioSource ? { exact: audioSource } : undefined } };
+        
+        navigator.mediaDevices.getUserMedia(constraints).then(stream => {
+            mediaRecorder = new MediaRecorder(stream, options);
+            mediaRecorder.ondataavailable = (event) => {
+                if (event.data.size > 0) {
+                    recordedChunks.push(event.data);
+                }
+            };
+            mediaRecorder.onstart = () => recordingIndicator.classList.remove('hidden');
+            mediaRecorder.onstop = () => recordingIndicator.classList.add('hidden');
+            mediaRecorder.start();
+        });
+    }
+
+    // 6. 다음 질문 버튼 클릭 처리
+    nextQuestionBtn.addEventListener('click', () => {
+        if (mediaRecorder && mediaRecorder.state === 'recording') {
+            mediaRecorder.stop();
+            mediaRecorder.onstop = () => {
+                const blob = new Blob(recordedChunks, { type: 'audio/webm' });
+                sendData(blob);
+                recordingIndicator.classList.add('hidden');
+            };
+        }
+    });
+
+    // 7. 녹화된 데이터 서버로 전송
+    function sendData(blob) {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+            // "data:audio/webm;base64," 부분을 제거하고 순수 Base64 데이터만 전송
+            const base64String = reader.result.split(',')[1];
+            if (webSocket && webSocket.readyState === WebSocket.OPEN) {
+                webSocket.send(base64String);
+                console.log("Sent audio data as Base64.");
+            }
+        };
+        reader.readAsDataURL(blob);
+    }
+    
+    // 8. 진행률 업데이트
+    function updateProgress() {
+        const totalQuestions = parseInt(totalQuestionNumSpan.textContent, 10);
+        const progress = (currentQuestionIndex / totalQuestions) * 100;
+        progressBar.style.width = `${progress}%`;
+        currentQuestionNumSpan.textContent = currentQuestionIndex;
+    }
+
+    // 페이지 로드 시 초기화 함수 실행
+    init();
+});
+</script>
+
+{{>layout/footer}}

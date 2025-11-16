@@ -1,0 +1,36 @@
+{{>layout/header}}
+<div class="h-20 md:h-24"></div>
+
+<main class="container mx-auto px-6 py-12">
+    <div class="text-center mb-12">
+        <h1 class="text-4xl md:text-5xl font-bold text-gray-800 mb-6">AI 면접 분석 리포트</h1>
+        <p class="text-xl text-gray-600 max-w-3xl mx-auto">AI가 면접 전반을 분석하여 생성한 종합 리포트입니다.</p>
+    </div>
+
+    <div class="max-w-4xl mx-auto bg-white rounded-3xl p-8 shadow-lg">
+        <!-- Markdown으로 된 피드백 텍스트를 HTML로 렌더링할 컨테이너 -->
+        <div id="feedback-container" class="prose lg:prose-xl max-w-none">
+            <!-- JavaScript에 의해 채워질 내용 -->
+        </div>
+    </div>
+
+    <!-- 숨겨진 데이터 블록 -->
+    <div id="feedback-data" class="hidden">{{analysis.feedbackText}}</div>
+</main>
+
+<!-- marked.js CDN -->
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const feedbackDataEl = document.getElementById('feedback-data');
+        const feedbackContainer = document.getElementById('feedback-container');
+
+        if (feedbackDataEl && feedbackContainer) {
+            const markdownText = feedbackDataEl.textContent;
+            // marked.js를 사용하여 Markdown을 HTML로 변환하고 컨테이너에 삽입
+            feedbackContainer.innerHTML = marked.parse(markdownText);
+        }
+    });
+</script>
+
+{{>layout/footer}}

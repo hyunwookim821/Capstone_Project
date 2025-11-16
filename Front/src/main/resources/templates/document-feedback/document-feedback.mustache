@@ -22,35 +22,28 @@
         <div class="bg-white rounded-3xl p-8 shadow-lg mb-8 fade-in">
             <h2 class="text-2xl font-bold text-gray-800 mb-6">서류 업로드</h2>
 
-            <div class="grid md:grid-cols-2 gap-6">
-                <!-- 이력서 업로드 -->
-                <div class="border-2 border-dashed border-blue-300 rounded-2xl p-8 text-center hover:border-blue-400 transition-colors">
+            <div class="flex justify-center">
+                <!-- 통합 업로드 -->
+                <div class="w-full md:w-3/4 lg:w-1/2 border-2 border-dashed border-blue-300 rounded-2xl p-8 text-center hover:border-blue-400 transition-colors">
                     <div class="w-16 h-16 bg-blue-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
                         <svg class="w-8 h-8 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
                         </svg>
                     </div>
-                    <h3 class="text-lg font-semibold text-gray-800 mb-2">이력서</h3>
+                    <h3 class="text-lg font-semibold text-gray-800 mb-2">이력서 또는 자기소개서</h3>
                     <p class="text-gray-600 mb-4">PDF, DOC, DOCX 파일을 업로드해주세요</p>
-                    <input type="file" id="resume" accept=".pdf,.doc,.docx" class="hidden">
-                    <label for="resume" class="bg-blue-400 text-white px-6 py-3 rounded-xl hover:bg-blue-500 transition-colors cursor-pointer inline-block">
-                        파일 선택
-                    </label>
-                </div>
 
-                <!-- 자기소개서 업로드 -->
-                <div class="border-2 border-dashed border-blue-300 rounded-2xl p-8 text-center hover:border-blue-400 transition-colors">
-                    <div class="w-16 h-16 bg-blue-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                        <svg class="w-8 h-8 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path>
-                        </svg>
-                    </div>
-                    <h3 class="text-lg font-semibold text-gray-800 mb-2">자기소개서</h3>
-                    <p class="text-gray-600 mb-4">PDF, DOC, DOCX 파일을 업로드해주세요</p>
-                    <input type="file" id="coverletter" accept=".pdf,.doc,.docx" class="hidden">
-                    <label for="coverletter" class="bg-blue-400 text-white px-6 py-3 rounded-xl hover:bg-blue-500 transition-colors cursor-pointer inline-block">
+                    <input type="file" id="documentInput" accept=".pdf,.doc,.docx" class="hidden">
+                    <label for="documentInput" id="documentLabel" class="bg-blue-400 text-white px-6 py-3 rounded-xl hover:bg-blue-500 transition-colors cursor-pointer inline-block">
                         파일 선택
                     </label>
+
+                    <div id="fileDisplayArea" class="hidden mt-4">
+                        <span id="selectedFileName" class="text-gray-700 font-medium mr-2"></span>
+                        <button id="changeFileButton" class="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-300 transition-colors">
+                            파일 변경
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -94,7 +87,7 @@
 
         <!-- 분석 시작 버튼 -->
         <div class="text-center fade-in-delay-2">
-            <button class="bg-gradient-to-r from-blue-400 to-purple-400 text-white px-12 py-4 rounded-2xl text-lg font-semibold hover:from-blue-500 hover:to-purple-500 transition-all transform hover:scale-105 shadow-lg">
+            <button id="startAnalysisButton" class="bg-gradient-to-r from-blue-400 to-purple-400 text-white px-12 py-4 rounded-2xl text-lg font-semibold hover:from-blue-500 hover:to-purple-500 transition-all transform hover:scale-105 shadow-lg">
                 AI 분석 시작하기
                 <svg class="w-5 h-5 inline-block ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path>
@@ -104,6 +97,73 @@
     </div>
 </main>
 
-<script src="/js/main.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const documentInput = document.getElementById('documentInput');
+        const documentLabel = document.getElementById('documentLabel');
+        const fileDisplayArea = document.getElementById('fileDisplayArea');
+        const selectedFileNameSpan = document.getElementById('selectedFileName');
+        const changeFileButton = document.getElementById('changeFileButton');
+        const startAnalysisButton = document.getElementById('startAnalysisButton');
+
+        documentInput.addEventListener('change', function() {
+            if (this.files && this.files.length > 0) {
+                const fileName = this.files[0].name;
+                selectedFileNameSpan.textContent = fileName;
+                documentLabel.classList.add('hidden');
+                fileDisplayArea.classList.remove('hidden');
+            } else {
+                selectedFileNameSpan.textContent = '';
+                documentLabel.classList.remove('hidden');
+                fileDisplayArea.classList.add('hidden');
+            }
+        });
+
+        changeFileButton.addEventListener('click', function() {
+            documentInput.value = '';
+            selectedFileNameSpan.textContent = '';
+            documentLabel.classList.remove('hidden');
+            fileDisplayArea.classList.add('hidden');
+        });
+
+        startAnalysisButton.addEventListener('click', async function() {
+            if (!documentInput.files || documentInput.files.length === 0) {
+                alert('분석할 파일을 선택해주세요.');
+                return;
+            }
+
+            const file = documentInput.files[0];
+            const formData = new FormData();
+            formData.append('document', file);
+
+            // TODO: 로딩 스피너 표시
+            this.disabled = true;
+            this.textContent = '분석 중...';
+
+            try {
+                const response = await fetch('/api/feedback/upload', {
+                    method: 'POST',
+                    body: formData,
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    if (result.redirectUrl) {
+                        window.location.href = result.redirectUrl;
+                    }
+                } else {
+                    alert('파일 업로드 및 분석에 실패했습니다.');
+                    this.disabled = false;
+                    this.textContent = 'AI 분석 시작하기';
+                }
+            } catch (error) {
+                console.error('Analysis start error:', error);
+                alert('오류가 발생했습니다. 다시 시도해주세요.');
+                this.disabled = false;
+                this.textContent = 'AI 분석 시작하기';
+            }
+        });
+    });
+</script>
 </body>
 </html>

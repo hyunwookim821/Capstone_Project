@@ -93,6 +93,13 @@ venv/
 ENV/
 env.bak/
 venv.bak/
+audio_files/
+*.pdf
+
+# EXE
+ffmpeg.exe
+ffplay.exe
+ffprobe.exe
 
 # Keys
 gen-lang-client-*.json
