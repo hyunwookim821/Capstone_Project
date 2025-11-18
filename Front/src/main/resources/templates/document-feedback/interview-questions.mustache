@@ -29,7 +29,7 @@
                 {{#questions}}
                 <li class="flex items-start">
                     <div class="flex-shrink-0 w-8 h-8 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center font-bold text-lg mr-4">Q</div>
-                    <p class="text-gray-800 text-lg leading-relaxed">{{.}}</p>
+                    <p class="text-gray-800 text-lg leading-relaxed">{{questionText}}</p>
                 </li>
                 {{/questions}}
             </ul>
@@ -41,7 +41,7 @@
 
             <!-- 모의 면접 진행 버튼 수정 -->
             <div class="text-center mt-12">
-                <a href="/interview/start" class="bg-gradient-to-r from-blue-500 to-purple-500 text-white px-12 py-4 rounded-2xl text-lg font-semibold hover:from-blue-600 hover:to-purple-600 transition-all transform hover:scale-105 shadow-lg">
+                <a href="/interview/start?resumeId={{resumeId}}" class="bg-gradient-to-r from-blue-500 to-purple-500 text-white px-12 py-4 rounded-2xl text-lg font-semibold hover:from-blue-600 hover:to-purple-600 transition-all transform hover:scale-105 shadow-lg">
                     AI 모의 면접 진행하기
                 </a>
             </div>

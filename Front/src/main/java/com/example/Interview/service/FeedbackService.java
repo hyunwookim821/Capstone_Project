@@ -4,6 +4,7 @@ import com.example.Interview.dto.ResumeDto;
 import com.example.Interview.dto.feedback.AIFeedbackDto;
 import com.example.Interview.dto.feedback.GrammarAnalysisDto;
 import com.example.Interview.dto.feedback.QuestionListDto;
+import com.example.Interview.dto.feedback.ResumeDetailDto; // ResumeDetailDto 임포트
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.buffer.DataBuffer;
 import org.springframework.core.io.buffer.DataBufferUtils;
@@ -40,29 +41,29 @@ public class FeedbackService {
     }
 
     // 2. 맞춤법 검사
-    public Mono<GrammarAnalysisDto> checkGrammar(String token, int resumeId) {
+    public Mono<ResumeDetailDto> checkGrammar(String token, int resumeId) {
         return webClient.post()
                 .uri("/resumes/{resume_id}/check-grammar", resumeId)
                 .headers(headers -> headers.setBearerAuth(token))
                 .retrieve()
-                .bodyToMono(GrammarAnalysisDto.class);
+                .bodyToMono(ResumeDetailDto.class);
     }
 
     // 3. AI 종합 피드백 요청
-    public Mono<AIFeedbackDto> getAiFeedback(String token, int resumeId) {
+    public Mono<String> getAiFeedback(String token, int resumeId) {
         return webClient.post()
                 .uri("/resumes/{resume_id}/feedback", resumeId)
                 .headers(headers -> headers.setBearerAuth(token))
                 .retrieve()
-                .bodyToMono(AIFeedbackDto.class);
+                .bodyToMono(String.class);
     }
 
     // 4. 예상 면접 질문 생성
-    public Mono<QuestionListDto> generateQuestions(String token, int resumeId) {
+    public Mono<ResumeDetailDto> generateQuestions(String token, int resumeId) {
         return webClient.post()
                 .uri("/resumes/{resume_id}/generate-questions", resumeId)
                 .headers(headers -> headers.setBearerAuth(token))
                 .retrieve()
-                .bodyToMono(QuestionListDto.class);
+                .bodyToMono(ResumeDetailDto.class);
     }
 }

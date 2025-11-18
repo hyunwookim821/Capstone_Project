@@ -20,4 +20,9 @@ public class PageController {
         model.addAttribute("token", token);
         return "view/selection";
     }
+
+    @GetMapping("/debug/test-results")
+    public String testResultsPage() {
+        return "debug/test-results";
+    }
 }

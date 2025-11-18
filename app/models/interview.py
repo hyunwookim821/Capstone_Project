@@ -1,6 +1,7 @@
 from sqlalchemy import Column, BigInteger, String, Text, DateTime, ForeignKey, Identity
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
+from sqlalchemy.types import JSON
 from datetime import datetime
 
 from app.db.base import Base
@@ -31,7 +32,7 @@ class Question(Base):
     created_at = Column(DateTime, server_default=func.now())
 
     interview = relationship("Interview", back_populates="questions")
-    answers = relationship("Answer", back_populates="question")
+    answers = relationship("Answer", back_populates="question", cascade="all, delete-orphan")
 
 
 class Answer(Base):
@@ -41,5 +42,6 @@ class Answer(Base):
     answer_text = Column(Text, nullable=False)
     audio_path = Column(String(255), nullable=True)  # Path to the audio file
     created_at = Column(DateTime, default=datetime.utcnow)
+    whisper_result = Column(JSON, nullable=True)  # Store full whisper result
 
     question = relationship("Question", back_populates="answers")

@@ -29,7 +29,7 @@ public class InterviewPracticeController {
         // 면접에 사용할 질문 목록을 다시 가져옴
         return feedbackService.generateQuestions(token, resumeId)
                 .map(questionList -> {
-                    model.addAttribute("questions", questionList.getQuestions());
+                    model.addAttribute("questions", questionList.getGeneratedQuestions());
                     return "interview-practice/interview-practice";
                 })
                 .onErrorResume(e -> Mono.just("redirect:/document-feedback"));

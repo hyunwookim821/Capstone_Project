@@ -5,12 +5,12 @@ import lombok.Data;
 
 @Data
 public class AIFeedbackDto {
-    @JsonProperty("error_count")
-    private int errorCount;
+    @JsonProperty("content")
+    private String originalContent;
 
-    @JsonProperty("corrected_sentence")
+    @JsonProperty("corrected_content")
     private String correctedSentence;
 
-    @JsonProperty("feedback")
+    @JsonProperty("ai_feedback")
     private String feedback;
 }

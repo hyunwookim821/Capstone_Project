@@ -9,6 +9,7 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable; // PathVariable 임포트 추가
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import reactor.core.publisher.Mono;
 
 @Controller
@@ -20,27 +21,27 @@ public class InterviewController {
     private final InterviewService interviewService; // InterviewService 주입
 
     @GetMapping("/start")
-    public Mono<String> startInterview(HttpSession session, Model model) {
+    public String startInterview(
+            @RequestParam Integer resumeId,
+            // This parameter is no longer needed here but kept to avoid breaking links
+            @RequestParam(required = false) Boolean use_existing_questions,
+            HttpSession session,
+            Model model
+    ) {
         String token = (String) session.getAttribute("token");
-        Integer resumeId = (Integer) session.getAttribute("resumeId");
 
         if (token == null || resumeId == null) {
-            return Mono.just("redirect:/document-feedback");
+            return "redirect:/document-feedback";
         }
 
-        return feedbackService.generateQuestions(token, resumeId)
-                .map(questionList -> {
-                    model.addAttribute("questions", questionList.getQuestions());
-                    model.addAttribute("resumeId", resumeId);
-                    model.addAttribute("token", token); // token을 모델에 추가
-                    return "interview/interview-start";
-                })
-                .onErrorResume(e -> Mono.just("redirect:/document-feedback"));
+        model.addAttribute("resumeId", resumeId);
+        model.addAttribute("token", token);
+        return "interview/interview-start";
     }
 
     @GetMapping("/{interviewId}/results")
     public Mono<String> getInterviewResults(@PathVariable Long interviewId, HttpSession session, Model model) {
-        String token = (String) session.getAttribute("token");
+        final String token = (String) session.getAttribute("token");
         if (token == null) {
             return Mono.just("redirect:/auth/login");
         }
@@ -50,6 +51,10 @@ public class InterviewController {
                     model.addAttribute("analysis", analysisDto);
                     return "interview/interview-results";
                 })
-                .onErrorResume(e -> Mono.just("redirect:/")); // 에러 발생 시 홈으로
-    }
-}
+                .onErrorResume(e -> {
+                    // Log the error for debugging and pass it to the view
+                    System.err.println("Error fetching interview results: " + e.getMessage());
+                    model.addAttribute("errorMessage", "면접 결과를 가져오는 중 오류가 발생했습니다: " + e.getMessage());
+                    return Mono.just("error"); // 에러 페이지로 이동
+                });
+    }}

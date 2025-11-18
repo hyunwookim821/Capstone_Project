@@ -36,69 +36,96 @@
         <!-- AI 종합 피드백 섹션 -->
         <div class="bg-white rounded-3xl p-8 shadow-lg fade-in-delay">
             <h2 class="text-2xl font-bold text-gray-800 mb-6">AI 종합 피드백</h2>
-            <div id="feedbackArea" class="p-6 bg-gray-50 rounded-2xl min-h-[150px] flex items-center justify-center">
-                <button id="requestFeedbackBtn" class="bg-gradient-to-r from-blue-400 to-purple-400 text-white px-8 py-4 rounded-xl text-lg font-semibold hover:from-blue-500 hover:to-purple-500 transition-all transform hover:scale-105 shadow-lg">
-                    수정된 내용으로 AI 피드백 받기
-                </button>
-                <div id="feedbackContent" class="hidden text-gray-800 whitespace-pre-line">
-                    <!-- AI 피드백이 여기에 표시됩니다. -->
-                </div>
-                <div id="loadingSpinner" class="hidden">
-                    <svg class="animate-spin h-8 w-8 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                    <p class="mt-2 text-gray-600">AI가 피드백을 생성하고 있습니다. 잠시만 기다려주세요...</p>
-                </div>
+            <div id="feedback-container" class="prose lg:prose-xl max-w-none p-6 bg-gray-50 rounded-2xl min-h-[150px]">
+                <!-- JS에 의해 내용이 채워집니다 -->
             </div>
-            <!-- 예상 면접 질문 버튼 -->
-            <div id="interviewQuestionBtnContainer" class="hidden text-center mt-6">
-                <a href="/document-feedback/interview-questions" class="bg-green-500 text-white px-8 py-4 rounded-xl text-lg font-semibold hover:bg-green-600 transition-all transform hover:scale-105 shadow-lg">
-                    예상 면접 질문 받아보기
-                </a>
-            </div>
+            <div id="feedback-data" class="hidden">{{feedback}}</div>
+        </div>
+
+        <!-- 다음 단계 버튼 (초기에는 숨김) -->
+        <div id="next-step-container" class="text-center mt-12 hidden">
+            <a href="/document-feedback/interview-questions" class="bg-gradient-to-r from-blue-500 to-purple-500 text-white px-12 py-4 rounded-2xl text-lg font-semibold hover:from-blue-600 hover:to-purple-600 transition-all transform hover:scale-105 shadow-lg">
+                AI 예상 면접 질문 생성하기
+            </a>
         </div>
     </div>
 </main>
 
+<!-- marked.js CDN -->
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const requestFeedbackBtn = document.getElementById('requestFeedbackBtn');
-        const loadingSpinner = document.getElementById('loadingSpinner');
-        const feedbackContent = document.getElementById('feedbackContent');
+document.addEventListener('DOMContentLoaded', () => {
+    const feedbackDataEl = document.getElementById('feedback-data');
+    const feedbackContainer = document.getElementById('feedback-container');
+    const resumeId = '{{resumeId}}';
 
-        requestFeedbackBtn.addEventListener('click', async function() {
-            // UI 업데이트: 버튼 숨기고 로딩 스피너 표시
-            requestFeedbackBtn.classList.add('hidden');
-            loadingSpinner.classList.remove('hidden');
-            feedbackContent.classList.add('hidden');
+    const feedbackContent = feedbackDataEl.textContent.trim();
 
-            try {
-                const response = await fetch('/api/feedback/ai-feedback', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    }
-                });
+    if (feedbackContent) {
+        // 피드백 내용이 있으면 렌더링하고 다음 단계 버튼 표시
+        feedbackContainer.innerHTML = marked.parse(feedbackContent);
+        document.getElementById('next-step-container').classList.remove('hidden');
+    } else {
+        // 피드백 내용이 없으면 버튼 생성
+        const buttonPlaceholder = document.createElement('div');
+        buttonPlaceholder.className = 'text-center';
+        buttonPlaceholder.id = 'feedback-placeholder';
+        buttonPlaceholder.innerHTML = `
+            <p class="text-gray-500 mb-4">아래 버튼을 눌러 AI 피드백을 받아보세요.</p>
+            <button id="get-feedback-btn" class="bg-blue-500 text-white px-6 py-2 rounded-lg font-semibold hover:bg-blue-600 transition-colors">
+                <span class="spinner mr-2" style="display: none;"></span>
+                AI 피드백 받기
+            </button>
+        `;
+        feedbackContainer.appendChild(buttonPlaceholder);
 
-                if (response.ok) {
-                    const result = await response.json();
-                    feedbackContent.textContent = result.feedback; // 'feedback' 필드 사용
-                    feedbackContent.classList.remove('hidden');
-                    document.getElementById('interviewQuestionBtnContainer').classList.remove('hidden'); // 버튼 컨테이너 표시
-                } else {
-                    alert('AI 피드백 요청에 실패했습니다.');
-                    requestFeedbackBtn.classList.remove('hidden');
+        const getFeedbackBtn = document.getElementById('get-feedback-btn');
+        getFeedbackBtn.addEventListener('click', () => {
+            const spinner = getFeedbackBtn.querySelector('.spinner');
+            spinner.style.display = 'inline-block';
+            getFeedbackBtn.disabled = true;
+
+            fetch(`/document-feedback/feedback/${resumeId}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+            })
+            .then(response => {
+                if (!response.ok) {
+                    return response.text().then(text => {
+                        throw new Error(`HTTP error! status: ${response.status}, body: ${text}`);
+                    });
                 }
-            } catch (error) {
-                console.error('AI feedback request error:', error);
-                alert('AI 피드백 요청 중 오류가 발생했습니다.');
-                requestFeedbackBtn.classList.remove('hidden');
-            } finally {
-                loadingSpinner.classList.add('hidden');
-            }
+                return response.text(); // 응답을 텍스트로 받음
+            })
+            .then(text => {
+                const data = JSON.parse(text); // 텍스트를 JSON으로 파싱
+                const feedbackText = data.ai_feedback || ''; // 키 이름이 ai_feedback 임
+                feedbackContainer.innerHTML = marked.parse(feedbackText);
+                document.getElementById('next-step-container').classList.remove('hidden');
+            })
+            .catch(error => {
+                console.error('Error fetching AI feedback:', error);
+                alert('AI 피드백을 가져오는 중 오류가 발생했습니다. 개발자 콘솔(F12)을 확인해주세요.');
+                spinner.style.display = 'none';
+                getFeedbackBtn.disabled = false;
+            });
         });
-    });
+    }
+});
 </script>
+<style>
+    .spinner {
+        display: inline-block;
+        width: 1rem;
+        height: 1rem;
+        border: 2px solid rgba(255,255,255,0.3);
+        border-radius: 50%;
+        border-top-color: #fff;
+        animation: spin 1s ease-in-out infinite;
+    }
+    @keyframes spin {
+        to { transform: rotate(360deg); }
+    }
+</style>
 
 {{>layout/footer}}

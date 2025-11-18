@@ -30,7 +30,7 @@ def create_question(db: Session, *, obj_in: QuestionCreate) -> Question:
     return db_obj
 
 def get_questions_by_interview(db: Session, interview_id: int) -> List[Question]:
-    return db.query(Question).filter(Question.interview_id == interview_id).all()
+    return db.query(Question).filter(Question.interview_id == interview_id).order_by(Question.question_id).all()
 
 def get_latest_questions_by_resume(db: Session, resume_id: int) -> List[Question]:
     """
@@ -39,7 +39,7 @@ def get_latest_questions_by_resume(db: Session, resume_id: int) -> List[Question
     latest_interview = db.query(Interview).filter(Interview.resume_id == resume_id).order_by(Interview.created_at.desc()).first()
     if not latest_interview:
         return []
-    return db.query(Question).filter(Question.interview_id == latest_interview.interview_id).all()
+    return db.query(Question).filter(Question.interview_id == latest_interview.interview_id).order_by(Question.question_id).all()
 
 
 # CRUD for Answer

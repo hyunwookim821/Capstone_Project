@@ -40,8 +40,11 @@ def update(db: Session, *, db_obj: User, obj_in: UserUpdate) -> User:
         hashed_password = get_password_hash(update_data["password"])
         update_data["password"] = hashed_password
 
-    for field in update_data:
-        setattr(db_obj, field, update_data[field])
+    for field, value in update_data.items():
+        if value == "":
+            setattr(db_obj, field, None)
+        else:
+            setattr(db_obj, field, value)
     
     db.add(db_obj)
     db.commit()

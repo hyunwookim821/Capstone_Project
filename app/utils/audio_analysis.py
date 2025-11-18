@@ -1,54 +1,38 @@
-import librosa
-import numpy as np
-import soundfile as sf
-from typing import Tuple
+import math
 
-def analyze_speech_audio(audio_path: str, transcript: str) -> Tuple[float, float]:
+def analyze_whisper_result(whisper_result: dict):
     """
-    Analyzes an audio file to calculate speech rate and silence ratio.
-
-    Args:
-        audio_path: Path to the audio file.
-        transcript: The transcribed text of the audio.
-
-    Returns:
-        A tuple containing:
-        - speech_rate (words per minute)
-        - silence_ratio (percentage of silence in the audio)
+    Analyzes the result from Whisper to calculate WPM and silence ratio.
+    This method avoids reloading the audio file and is much more efficient.
     """
-    try:
-        # Load audio file
-        y, sr = sf.read(audio_path)
-        # Ensure it's mono
-        if y.ndim > 1:
-            y = y.mean(axis=1)
-    except Exception as e:
-        print(f"Could not read audio file {audio_path}: {e}")
+    if not whisper_result or not whisper_result.get("segments"):
         return 0.0, 0.0
 
-    # --- 1. Calculate Speech Rate (Words Per Minute) ---
-    duration_seconds = librosa.get_duration(y=y, sr=sr)
-    word_count = len(transcript.split())
+    segments = whisper_result["segments"]
+    full_text = whisper_result.get("text", "").strip()
+
+    if not full_text:
+        return 0.0, 0.0
+
+    # 1. Calculate total duration from the last segment's end time
+    total_duration = segments[-1]["end"]
+    if total_duration == 0:
+        return 0.0, 0.0
+
+    # 2. Calculate Word Count
+    num_words = len(full_text.split())
+
+    # 3. Calculate WPM (Words Per Minute)
+    minutes = total_duration / 60
+    wpm = num_words / minutes if minutes > 0 else 0.0
+
+    # 4. Calculate Silence Ratio
+    # Sum the duration of actual speech segments
+    speech_duration = sum(seg["end"] - seg["start"] for seg in segments)
     
-    speech_rate = 0.0
-    if duration_seconds > 0:
-        minutes = duration_seconds / 60
-        speech_rate = word_count / minutes if minutes > 0 else 0
-
-    # --- 2. Calculate Silence Ratio ---
-    # Split audio into non-silent parts
-    non_silent_intervals = librosa.effects.split(y, top_db=30) # top_db can be adjusted
+    # Silence duration is the total time minus the time spent speaking
+    silence_duration = total_duration - speech_duration
     
-    silent_duration = 0.0
-    if len(non_silent_intervals) > 0:
-        non_silent_duration = sum(librosa.samples_to_time(interval[1] - interval[0], sr=sr) for interval in non_silent_intervals)
-        silent_duration = duration_seconds - non_silent_duration
-    else:
-        # If no non-silent parts are found, the whole audio is considered silent
-        silent_duration = duration_seconds
+    silence_ratio = (silence_duration / total_duration) * 100 if total_duration > 0 else 0.0
 
-    silence_ratio = 0.0
-    if duration_seconds > 0:
-        silence_ratio = (silent_duration / duration_seconds) * 100
-
-    return speech_rate, silence_ratio
+    return wpm, silence_ratio

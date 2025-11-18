@@ -1,12 +1,12 @@
-from sqlalchemy.orm import Session
-from typing import List
+from sqlalchemy.orm import Session, joinedload
+from typing import List, Any, Dict, Optional, Union
 
 from app.models.resume import Resume
 from app.schemas.resume import ResumeCreate, ResumeUpdate
+from app import models # models 임포트 추가
 
-
-def get(db: Session, resume_id: int):
-    return db.query(Resume).filter(Resume.resume_id == resume_id).first()
+def get(db: Session, resume_id: int) -> Optional[Resume]:
+    return db.query(Resume).options(joinedload(models.Resume.generated_questions)).filter(Resume.resume_id == resume_id).first()
 
 def get_multi(db: Session, skip: int = 0, limit: int = 100) -> List[Resume]:
     return db.query(Resume).offset(skip).limit(limit).all()
@@ -33,8 +33,12 @@ def create(db: Session, *, obj_in: ResumeCreate, user_id: int) -> Resume:
     db.refresh(db_obj)
     return db_obj
 
-def update(db: Session, *, db_obj: Resume, obj_in: ResumeUpdate) -> Resume:
-    update_data = obj_in.dict(exclude_unset=True)
+def update(db: Session, *, db_obj: Resume, obj_in: Union[ResumeUpdate, Dict[str, Any]]) -> Resume:
+    if isinstance(obj_in, dict):
+        update_data = obj_in
+    else:
+        update_data = obj_in.dict(exclude_unset=True)
+    
     for field in update_data:
         setattr(db_obj, field, update_data[field])
     db.add(db_obj)
@@ -42,8 +46,25 @@ def update(db: Session, *, db_obj: Resume, obj_in: ResumeUpdate) -> Resume:
     db.refresh(db_obj)
     return db_obj
 
-def remove(db: Session, *, resume_id: int) -> Resume:
-    obj = db.query(Resume).get(resume_id)
+def remove(db: Session, *, resume_id: int) -> Optional[Resume]:
+    # Eagerly load related entities
+    obj = db.query(Resume).options(
+        joinedload(Resume.generated_questions)
+    ).filter(Resume.resume_id == resume_id).first()
+
+    if not obj:
+        return None  # Or raise an exception
+
+    # Delete dependent generated questions
+    for question in obj.generated_questions:
+        db.delete(question)
+
+    # Find and delete dependent interviews
+    interviews = db.query(models.Interview).filter(models.Interview.resume_id == resume_id).all()
+    for interview in interviews:
+        db.delete(interview)
+
+    # Now delete the resume itself
     db.delete(obj)
     db.commit()
     return obj

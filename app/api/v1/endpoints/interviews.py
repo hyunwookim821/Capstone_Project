@@ -4,6 +4,7 @@ import os
 import base64
 import uuid
 import re
+import io
 import google.generativeai as genai
 import google.cloud.texttospeech as tts
 import whisper
@@ -19,7 +20,7 @@ from app.api import deps
 from app.schemas.interview import InterviewCreate, QuestionCreate, AnswerCreate, InterviewSession, VideoAnalysisRequest
 from app.schemas.analysis import Analysis, AnalysisCreate
 from app.schemas.video_analysis import VideoAnalysisCreate
-from app.utils.audio_analysis import analyze_speech_audio
+from app.utils.audio_analysis import analyze_whisper_result
 from app.utils.video_analysis import analyze_video_landmarks
 
 load_dotenv()
@@ -37,20 +38,23 @@ def create_interview_session(
     current_user: models.User = Depends(deps.get_current_user)
 ):
     """
-    Create a new interview session.
+    Creates an interview session.
+    It uses questions already associated with the resume.
+    If no questions exist, it generates them on the fly and saves them to the resume.
     """
     resume = crud.resume.get(db, resume_id=resume_id)
     if not resume or resume.user_id != current_user.user_id:
         raise HTTPException(status_code=404, detail="Resume not found or access denied")
 
-    existing_questions = crud.interview.get_latest_questions_by_resume(db, resume_id=resume_id)
-    
-    if existing_questions:
-        questions_text = [q.question_text for q in existing_questions]
+    questions_text = []
+    if resume.generated_questions:
+        print(f"Found {len(resume.generated_questions)} existing questions for resume {resume_id}.")
+        questions_text = [q.question_text for q in resume.generated_questions]
     else:
+        print(f"No questions found for resume {resume_id}. Generating new ones.")
         content = resume.content or ""
         if not content:
-            raise HTTPException(status_code=400, detail="Resume content is empty")
+            raise HTTPException(status_code=400, detail="Resume content is empty, cannot generate questions.")
 
         try:
             google_api_key = os.getenv("GOOGLE_API_KEY")
@@ -64,7 +68,7 @@ def create_interview_session(
             response = model.generate_content(prompt)
             
             raw_questions = response.text.split('\n')
-            questions_text = []
+            temp_questions = []
             for q in raw_questions:
                 q = q.strip()
                 if not q or "예상 면접 질문 리스트" in q or q == "$$공통$$":
@@ -72,24 +76,21 @@ def create_interview_session(
                 q = re.sub(r'^\d+\.\s*', '', q)
                 q = q.replace('🌶️', '').strip()
                 if q:
-                    questions_text.append(q)
-
-            if not questions_text:
+                    temp_questions.append(q)
+            
+            if not temp_questions:
                 raise HTTPException(status_code=500, detail="Failed to generate questions.")
+            
+            # Save the newly generated questions to the resume
+            for q_text in temp_questions:
+                q_in = {"resume_id": resume.resume_id, "question_text": q_text}
+                crud.generated_question.create(db=db, obj_in=q_in)
+            
+            questions_text = temp_questions
+            print(f"Generated and saved {len(questions_text)} new questions for resume {resume_id}.")
 
         except Exception as e:
             raise HTTPException(status_code=500, detail=f"AI question generation failed: {str(e)}")
-
-    cleaned_questions_text = []
-    for q in questions_text:
-        q = q.strip()
-        if not q or "예상 면접 질문 리스트" in q or q == "$$공통$$":
-            continue
-        q = re.sub(r'^\d+\.\s*', '', q)
-        q = q.replace('🌶️', '').strip()
-        if q:
-            cleaned_questions_text.append(q)
-    questions_text = cleaned_questions_text
 
     interview_create = InterviewCreate(user_id=current_user.user_id, resume_id=resume_id)
     interview = crud.interview.create_interview(db=db, obj_in=interview_create)
@@ -143,9 +144,9 @@ async def get_interview_results(
     avg_silence_ratio = None
 
     for q in questions:
-        if q.answers and q.answers[0].audio_path and os.path.exists(q.answers[0].audio_path):
+        if q.answers and q.answers[0].whisper_result:
             answer = q.answers[0]
-            speech_rate, silence_ratio = analyze_speech_audio(answer.audio_path, answer.answer_text)
+            speech_rate, silence_ratio = analyze_whisper_result(answer.whisper_result)
             total_speech_rate += speech_rate
             total_silence_ratio += silence_ratio
             num_answers_with_audio += 1
@@ -368,7 +369,7 @@ async def websocket_interview(
             base64_audio_data = await websocket.receive_text()
             print("Base64 text received. Decoding...")
             audio_bytes = base64.b64decode(base64_audio_data)
-            print(f"Decoded {len(audio_bytes)} bytes. Proceeding to transcription.")
+            print(f"Decoded {len(audio_bytes)} bytes. Proceeding to conversion and transcription.")
 
             audio_dir = "audio_files"
             os.makedirs(audio_dir, exist_ok=True)
@@ -377,23 +378,26 @@ async def websocket_interview(
             audio_path = os.path.join(audio_dir, audio_filename)
 
             try:
+                # Load audio from bytes and export as WAV
+                audio_segment = AudioSegment.from_file(io.BytesIO(audio_bytes))
+                audio_segment.export(audio_path, format="wav")
+                print(f"Successfully converted and saved audio to {audio_path}")
+
                 if 'whisper_model' not in globals():
                     globals()['whisper_model'] = whisper.load_model("small")
-                
-                with open(audio_path, "wb") as f:
-                    f.write(audio_bytes)
                 
                 result = globals()['whisper_model'].transcribe(audio_path, language="ko")
                 print(f"Whisper transcription result: {result}")
                 answer_text = result.get("text", "")
             except Exception as e:
-                print(f"Error during transcription: {e}")
+                print(f"Error during audio processing or transcription: {e}")
                 answer_text = ""
             
             answer_create = AnswerCreate(
                 question_id=question.question_id, 
                 answer_text=answer_text,
-                audio_path=audio_path
+                audio_path=audio_path,
+                whisper_result=result  # Save the full result
             )
             crud.interview.create_answer(db=db, obj_in=answer_create)
             

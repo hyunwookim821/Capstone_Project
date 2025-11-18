@@ -365,7 +365,23 @@
                     {{/resumes.isEmpty}}
                     {{^resumes.isEmpty}}
                     <div id="resume-list-container" class="space-y-4">
-                        <!-- Resume items will be rendered here by JavaScript -->
+                        {{#resumes}}
+                        <div class="border rounded-lg" data-resume-id="{{resumeId}}">
+                            <div class="p-4 flex justify-between items-center">
+                                <div class="cursor-pointer flex-grow" onclick="document.querySelector('[data-target=\'#content-{{resumeId}}\']').click()">
+                                    <p class="font-semibold text-gray-800">{{title}}</p>
+                                    <p class="text-sm text-gray-500">업로드: {{createdAt}}</p>
+                                </div>
+                                <div class="flex-shrink-0 ml-4">
+                                    <button class="toggle-resume-btn text-blue-500 hover:text-blue-700 font-semibold mr-4" data-target="#content-{{resumeId}}">보기</button>
+                                    <button class="delete-resume-btn text-red-500 hover:text-red-700 font-semibold" data-id="{{resumeId}}">삭제</button>
+                                </div>
+                            </div>
+                            <div id="content-{{resumeId}}" class="hidden p-4 border-t bg-gray-50">
+                                <pre class="whitespace-pre-wrap text-gray-700">{{content}}</pre>
+                            </div>
+                        </div>
+                        {{/resumes}}
                     </div>
                     {{/resumes.isEmpty}}
                 </div>
@@ -391,7 +407,7 @@
             <div id="documentsSection" class="content-section hidden">
                 <div class="bg-white rounded-2xl shadow-lg p-8 md:p-12 fade-in">
                     <h1 class="text-3xl font-bold text-gray-800 mb-6">서류 피드백 이력</h1>
-                    {{#feedbackResumes.isEmpty}}
+                    {{#resumes.isEmpty}}
                     <div class="text-center py-20">
                         <svg class="w-24 h-24 mx-auto text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
@@ -401,10 +417,10 @@
                             서류 피드백 받기
                         </a>
                     </div>
-                    {{/feedbackResumes.isEmpty}}
-                    {{^feedbackResumes.isEmpty}}
+                    {{/resumes.isEmpty}}
+                    {{^resumes.isEmpty}}
                     <div class="space-y-4">
-                        {{#feedbackResumes}}
+                        {{#resumes}}
                         <a href="/resumes/history/{{resumeId}}" class="block p-4 border rounded-lg flex justify-between items-center hover:bg-gray-50 transition-colors">
                             <div>
                                 <p class="font-semibold text-gray-800">{{title}}</p>
@@ -414,9 +430,9 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
                             </svg>
                         </a>
-                        {{/feedbackResumes}}
+                        {{/resumes}}
                     </div>
-                    {{/feedbackResumes.isEmpty}}
+                    {{/resumes.isEmpty}}
                 </div>
             </div>
         </div>
@@ -433,8 +449,8 @@
 </footer>
 
 <script>
-    // 1. Define functions in a globally accessible scope
-    function showSection(sectionName) {
+    // Global functions for onclick attributes
+    window.showSection = function(sectionName) {
         document.querySelectorAll('.content-section').forEach(section => section.classList.add('hidden'));
         document.querySelectorAll('.menu-item').forEach(item => {
             item.classList.remove('active', 'bg-blue-50', 'text-blue-600');
@@ -451,109 +467,101 @@
         }
     }
 
-    function toggleEditMode() {
+    window.toggleEditMode = function() {
         const viewMode = document.getElementById('viewMode');
         const editMode = document.getElementById('editMode');
-        if (!viewMode || !editMode) return;
-
         viewMode.classList.toggle('hidden');
         editMode.classList.toggle('hidden');
-
         if (!editMode.classList.contains('hidden')) {
-            loadEditData(window.currentUserData);
+            loadEditData(currentUserData);
         } else {
-            loadViewData(window.currentUserData);
+            loadViewData(currentUserData);
         }
     }
 
-    function formatDate(dateString) {
-        if (!dateString) return '';
-        const date = new Date(dateString);
-        const offset = date.getTimezoneOffset();
-        const adjustedDate = new Date(date.getTime() - (offset*60*1000));
-        return adjustedDate.toISOString().split('T')[0];
-    }
+    let currentUserData = {};
+    let initialResumes = [];
+    const authToken = "{{token}}";
 
-    function loadViewData(data) {
-        if (!data) return;
-        document.getElementById('view_name').textContent = data.user_name || '-';
-        document.getElementById('view_email').textContent = data.email || '-';
-        document.getElementById('view_phone').textContent = data.phone || '-';
-        document.getElementById('view_birthdate').textContent = data.birthdate ? formatDate(data.birthdate) : '-';
-        document.getElementById('view_desired_position').textContent = data.desired_position || '-';
-        document.getElementById('view_desired_industry').textContent = data.desired_industry || '-';
-        document.getElementById('view_career_years').textContent = data.career_years || '-';
-        document.getElementById('view_career_description').textContent = data.career_description || '-';
-        document.getElementById('view_education').textContent = data.education || '-';
-        document.getElementById('view_major').textContent = data.major || '-';
-        document.getElementById('view_skills').textContent = data.skills || '-';
-        document.getElementById('view_introduction').textContent = data.introduction || '-';
-        document.getElementById('view_interview_goal').textContent = data.interview_goal || '-';
-    }
+    // All other logic runs after the page is fully loaded
+    window.onload = function() {
+        try {
+            currentUserData = JSON.parse('{{{userJson}}}');
+        } catch (e) { console.error("Error parsing userJson:", e); }
 
-    function loadEditData(data) {
-        if (!data) return;
-        document.getElementById('edit_name').value = data.user_name || '';
-        document.getElementById('edit_email').value = data.email || '';
-        document.getElementById('edit_phone').value = data.phone || '';
-        document.getElementById('edit_birthdate').value = data.birthdate ? formatDate(data.birthdate) : '';
-        document.getElementById('edit_desired_position').value = data.desired_position || '';
-        document.getElementById('edit_desired_industry').value = data.desired_industry || '';
-        document.getElementById('edit_career_years').value = data.career_years || '';
-        document.getElementById('edit_career_description').value = data.career_description || '';
-        document.getElementById('edit_education').value = data.education || '';
-        document.getElementById('edit_major').value = data.major || '';
-        document.getElementById('edit_skills').value = data.skills || '';
-        document.getElementById('edit_introduction').value = data.introduction || '';
-        document.getElementById('edit_interview_goal').value = data.interview_goal || '';
-    }
+        try {
+            initialResumes = JSON.parse('{{{resumesJson}}}');
+        } catch (e) { console.error("Error parsing resumesJson:", e); }
 
-    function renderResumes(resumes, container) {
-        if (!container) return;
-        container.innerHTML = '';
-        if (!resumes || resumes.length === 0) return;
-
-        resumes.forEach(resume => {
-            const resumeEl = document.createElement('div');
-            resumeEl.className = 'border rounded-lg';
-            resumeEl.setAttribute('data-resume-id', resume.resume_id);
-            const escapedContent = resume.content ? resume.content.replace(/</g, "&lt;").replace(/>/g, "&gt;") : '';
-            resumeEl.innerHTML = `
-                <div class="p-4 flex justify-between items-center">
-                    <div class="cursor-pointer flex-grow" onclick="document.querySelector('[data-target=\'#content-${resume.resume_id}\']').click()">
-                        <p class="font-semibold text-gray-800">${resume.title || '제목 없음'}</p>
-                        <p class="text-sm text-gray-500">업로드: ${formatDate(resume.createdAt)}</p>
-                    </div>
-                    <div class="flex-shrink-0 ml-4">
-                        <button class="toggle-resume-btn text-blue-500 hover:text-blue-700 font-semibold mr-4" data-target="#content-${resume.resume_id}">보기</button>
-                        <button class="delete-resume-btn text-red-500 hover:text-red-700 font-semibold" data-id="${resume.resume_id}">삭제</button>
-                    </div>
-                </div>
-                <div id="content-${resume.resume_id}" class="hidden p-4 border-t bg-gray-50">
-                    <pre class="whitespace-pre-wrap text-gray-700">${escapedContent}</pre>
-                </div>
-            `;
-            container.appendChild(resumeEl);
-        });
-    }
-
-    // 2. Main execution block
-    document.addEventListener('DOMContentLoaded', function() {
-        const authToken = "{{token}}";
-        
-        // CORRECT & SAFE DATA INJECTION
-        const currentUserData = {{{userJson}}};
-        let initialResumes = {{{resumesJson}}};
-
-        if (!currentUserData) {
-            console.error("currentUserData is null or undefined. Halting execution.");
-            document.getElementById('profileSection').innerHTML = '<p class="text-red-500 p-8">사용자 정보가 없습니다. 다시 로그인해주세요.</p>';
-            return;
+        // Helper functions
+        function formatDate(dateString) {
+            if (!dateString) return '';
+            const date = new Date(dateString);
+            const offset = date.getTimezoneOffset();
+            const adjustedDate = new Date(date.getTime() - (offset*60*1000));
+            return adjustedDate.toISOString().split('T')[0];
         }
-        
-        window.currentUserData = currentUserData;
 
-        // Attach event listeners
+        window.loadViewData = function(data) {
+            document.getElementById('view_name').textContent = data.user_name || '-';
+            document.getElementById('view_email').textContent = data.email || '-';
+            document.getElementById('view_phone').textContent = data.phone || '-';
+            document.getElementById('view_birthdate').textContent = data.birthdate ? formatDate(data.birthdate) : '-';
+            document.getElementById('view_desired_position').textContent = data.desired_position || '-';
+            document.getElementById('view_desired_industry').textContent = data.desired_industry || '-';
+            document.getElementById('view_career_years').textContent = data.career_years || '-';
+            document.getElementById('view_career_description').textContent = data.career_description || '-';
+            document.getElementById('view_education').textContent = data.education || '-';
+            document.getElementById('view_major').textContent = data.major || '-';
+            document.getElementById('view_skills').textContent = data.skills || '-';
+            document.getElementById('view_introduction').textContent = data.introduction || '-';
+            document.getElementById('view_interview_goal').textContent = data.interview_goal || '-';
+        }
+
+        window.loadEditData = function(data) {
+            document.getElementById('edit_name').value = data.user_name || '';
+            document.getElementById('edit_email').value = data.email || '';
+            document.getElementById('edit_phone').value = data.phone || '';
+            document.getElementById('edit_birthdate').value = data.birthdate ? formatDate(data.birthdate) : '';
+            document.getElementById('edit_desired_position').value = data.desired_position || '';
+            document.getElementById('edit_desired_industry').value = data.desired_industry || '';
+            document.getElementById('edit_career_years').value = data.career_years || '';
+            document.getElementById('edit_career_description').value = data.career_description || '';
+            document.getElementById('edit_education').value = data.education || '';
+            document.getElementById('edit_major').value = data.major || '';
+            document.getElementById('edit_skills').value = data.skills || '';
+            document.getElementById('edit_introduction').value = data.introduction || '';
+            document.getElementById('edit_interview_goal').value = data.interview_goal || '';
+        }
+
+        function renderResumes(resumes) {
+            const container = document.getElementById('resume-list-container');
+            if (!container) return;
+            container.innerHTML = '';
+            resumes.forEach(resume => {
+                const resumeEl = document.createElement('div');
+                resumeEl.className = 'border rounded-lg';
+                resumeEl.setAttribute('data-resume-id', resume.resumeId);
+                resumeEl.innerHTML = `
+                    <div class="p-4 flex justify-between items-center">
+                        <div class="cursor-pointer flex-grow" onclick="document.querySelector('[data-target=\\'#content-${resume.resumeId}\\']').click()">
+                            <p class="font-semibold text-gray-800">${resume.title}</p>
+                            <p class="text-sm text-gray-500">업로드: ${formatDate(resume.createdAt)}</p>
+                        </div>
+                        <div class="flex-shrink-0 ml-4">
+                            <button class="toggle-resume-btn text-blue-500 hover:text-blue-700 font-semibold mr-4" data-target="#content-${resume.resumeId}">보기</button>
+                            <button class="delete-resume-btn text-red-500 hover:text-red-700 font-semibold" data-id="${resume.resumeId}">삭제</button>
+                        </div>
+                    </div>
+                    <div id="content-${resume.resumeId}" class="hidden p-4 border-t bg-gray-50">
+                        <pre class="whitespace-pre-wrap text-gray-700">${resume.content}</pre>
+                    </div>
+                `;
+                container.appendChild(resumeEl);
+            });
+        }
+
+        // Event Listeners
         const profileForm = document.getElementById('profileForm');
         if (profileForm) {
             profileForm.addEventListener('submit', async function(e) {
@@ -568,7 +576,7 @@
                         body: JSON.stringify(data),
                     });
                     if (response.ok) {
-                        window.currentUserData = await response.json();
+                        currentUserData = await response.json();
                         alert('프로필이 성공적으로 저장되었습니다!');
                         toggleEditMode();
                     } else {
@@ -584,21 +592,24 @@
 
         const sortAscBtn = document.getElementById('sort-asc');
         const sortDescBtn = document.getElementById('sort-desc');
-        const resumeListContainer = document.getElementById('resume-list-container');
-
         if (sortAscBtn && sortDescBtn) {
             sortAscBtn.addEventListener('click', () => {
                 initialResumes.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
-                renderResumes(initialResumes, resumeListContainer);
+                renderResumes(initialResumes);
+                sortAscBtn.classList.add('bg-blue-500', 'text-white');
+                sortDescBtn.classList.remove('bg-blue-500', 'text-white');
             });
             sortDescBtn.addEventListener('click', () => {
                 initialResumes.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-                renderResumes(initialResumes, resumeListContainer);
+                renderResumes(initialResumes);
+                sortDescBtn.classList.add('bg-blue-500', 'text-white');
+                sortAscBtn.classList.remove('bg-blue-500', 'text-white');
             });
         }
 
-        if (resumeListContainer) {
-            resumeListContainer.addEventListener('click', async function(event) {
+        const resumeContainer = document.getElementById('resume-list-container');
+        if (resumeContainer) {
+            resumeContainer.addEventListener('click', async function(event) {
                 const target = event.target;
                 if (target.classList.contains('toggle-resume-btn')) {
                     const targetId = target.getAttribute('data-target');
@@ -631,13 +642,14 @@
         }
 
         // Initial Page Setup
-        loadViewData(window.currentUserData);
-        showSection('profile');
-        if (initialResumes && initialResumes.length > 0) {
-            renderResumes(initialResumes, resumeListContainer);
-            if(sortDescBtn) sortDescBtn.click();
+        if (currentUserData) {
+            loadViewData(currentUserData);
         }
-    });
+        showSection('profile');
+        if(initialResumes && initialResumes.length > 0) {
+           sortDescBtn.click();
+        }
+    };
 </script>
 </body>
 </html>

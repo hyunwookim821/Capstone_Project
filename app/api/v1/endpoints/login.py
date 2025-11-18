@@ -10,7 +10,7 @@ router = APIRouter()
 
 @router.post("/token")
 def login_for_access_token(db: Session = Depends(deps.get_db), form_data: OAuth2PasswordRequestForm = Depends()):
-    user = crud.user.get_by_email(db, email=form_data.username)
+    user = crud.crud_user.get_by_email(db, email=form_data.username)
     if not user or not verify_password(form_data.password, user.password):
         raise HTTPException(
             status_code=401,

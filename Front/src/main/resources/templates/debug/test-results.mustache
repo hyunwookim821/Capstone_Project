@@ -1,0 +1,47 @@
+{{>layout/header}}
+<div class="h-20 md:h-24"></div>
+
+<main class="container mx-auto px-6 py-12">
+    <div class="text-center mb-12 fade-in">
+        <h1 class="text-4xl md:text-5xl font-bold text-gray-800 mb-6">
+            면접 결과 디버깅 페이지
+        </h1>
+        <p class="text-xl text-gray-600 max-w-3xl mx-auto">
+            이미 완료된 면접 ID를 입력하여 결과 페이지를 직접 테스트합니다.
+        </p>
+    </div>
+
+    <div class="max-w-md mx-auto bg-white rounded-3xl p-8 shadow-lg fade-in">
+        <div class="mb-6">
+            <label for="interviewIdInput" class="block text-gray-700 text-sm font-bold mb-2">
+                면접 ID (Interview ID)
+            </label>
+            <input type="number" id="interviewIdInput" placeholder="면접 ID를 입력하세요"
+                   class="shadow appearance-none border rounded-xl w-full py-3 px-4 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+        </div>
+        <div class="flex items-center justify-between">
+            <button id="viewResultsBtn"
+                    class="bg-gradient-to-r from-blue-500 to-purple-500 text-white px-8 py-3 rounded-xl text-lg font-semibold hover:from-blue-600 hover:to-purple-600 transition-all transform hover:scale-105 shadow-lg w-full">
+                결과 보기
+            </button>
+        </div>
+    </div>
+</main>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const viewResultsBtn = document.getElementById('viewResultsBtn');
+        const interviewIdInput = document.getElementById('interviewIdInput');
+
+        viewResultsBtn.addEventListener('click', function() {
+            const interviewId = interviewIdInput.value;
+            if (interviewId) {
+                window.location.href = `/interview/${interviewId}/results`;
+            } else {
+                alert('면접 ID를 입력해주세요.');
+            }
+        });
+    });
+</script>
+
+{{>layout/footer}}

@@ -141,7 +141,7 @@
             this.textContent = '분석 중...';
 
             try {
-                const response = await fetch('/api/feedback/upload', {
+                const response = await fetch('/document-feedback/upload', {
                     method: 'POST',
                     body: formData,
                 });

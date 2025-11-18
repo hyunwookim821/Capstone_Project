@@ -12,10 +12,8 @@ from dotenv import load_dotenv
 
 from app import crud, models
 from app.api import deps
-from app.schemas.resume import Resume, ResumeCreate, ResumeUpdate
-from app.schemas.analysis import GrammarAnalysis
-from app.schemas.feedback import AIFeedback
-from app.schemas.interview import QuestionList
+from app.schemas.resume import Resume, ResumeCreate, ResumeUpdate, ResumeDetail
+from app.schemas.generated_question import GeneratedQuestionCreate
 
 load_dotenv()
 
@@ -38,7 +36,7 @@ def _parse_pdf(file_content: bytes) -> str:
 
 # --- Resume CRUD Endpoints ---
 
-@router.get("/", response_model=List[Resume])
+@router.get("/", response_model=List[ResumeDetail])
 def read_resumes(
     db: Session = Depends(deps.get_db),
     skip: int = 0,
@@ -46,7 +44,7 @@ def read_resumes(
     current_user: models.User = Depends(deps.get_current_user),
 ) -> Any:
     """Retrieve resumes for the current user."""
-    resumes = crud.resume.get_multi_by_owner(db, owner_id=current_user.user_id, skip=skip, limit=limit)
+    resumes = crud.crud_resume.get_multi_by_owner(db, owner_id=current_user.user_id, skip=skip, limit=limit)
     return resumes
 
 @router.post("/", response_model=Resume)
@@ -71,17 +69,17 @@ async def create_resume(
         raise HTTPException(status_code=400, detail="Could not extract text from file.")
 
     resume_in = ResumeCreate(title=title, content=content)
-    resume = crud.resume.create(db=db, obj_in=resume_in, user_id=current_user.user_id)
+    resume = crud.crud_resume.create(db=db, obj_in=resume_in, user_id=current_user.user_id)
     return resume
 
-@router.get("/{resume_id}", response_model=Resume)
-def read_resume(
+@router.get("/{resume_id}", response_model=ResumeDetail)
+def read_resume_detail(
     resume_id: int,
     db: Session = Depends(deps.get_db),
     current_user: models.User = Depends(deps.get_current_user),
 ) -> Any:
-    """Get resume by ID. User can only access their own resume."""
-    resume = crud.resume.get(db=db, resume_id=resume_id)
+    """Get a resume with all its details including feedback and questions."""
+    resume = crud.crud_resume.get(db=db, resume_id=resume_id)
     if not resume or resume.user_id != current_user.user_id:
         raise HTTPException(status_code=404, detail="Resume not found or access denied")
     return resume
@@ -95,10 +93,10 @@ def update_resume(
     current_user: models.User = Depends(deps.get_current_user),
 ) -> Any:
     """Update a resume. User can only update their own resume."""
-    resume = crud.resume.get(db=db, resume_id=resume_id)
+    resume = crud.crud_resume.get(db=db, resume_id=resume_id)
     if not resume or resume.user_id != current_user.user_id:
         raise HTTPException(status_code=404, detail="Resume not found or access denied")
-    resume = crud.resume.update(db=db, db_obj=resume, obj_in=resume_in)
+    resume = crud.crud_resume.update(db=db, db_obj=resume, obj_in=resume_in)
     return resume
 
 @router.delete("/{resume_id}", response_model=Resume)
@@ -109,77 +107,71 @@ def delete_resume(
     current_user: models.User = Depends(deps.get_current_user),
 ) -> Any:
     """Delete a resume. User can only delete their own resume."""
-    resume = crud.resume.get(db=db, resume_id=resume_id)
+    resume = crud.crud_resume.get(db=db, resume_id=resume_id)
     if not resume or resume.user_id != current_user.user_id:
         raise HTTPException(status_code=404, detail="Resume not found or access denied")
-    resume = crud.resume.remove(db=db, resume_id=resume_id)
+    resume = crud.crud_resume.remove(db=db, resume_id=resume_id)
     return resume
 
 # --- Analysis Endpoints ---
 
-@router.post("/{resume_id}/check-grammar", response_model=GrammarAnalysis)
+@router.post("/{resume_id}/check-grammar", response_model=ResumeDetail)
 def check_resume_grammar(
-    resume_id: int, 
+    resume_id: int,
     db: Session = Depends(deps.get_db),
     current_user: models.User = Depends(deps.get_current_user),
 ) -> Any:
-    resume = crud.resume.get(db=db, resume_id=resume_id)
+    """
+    Check resume grammar and save the corrected content.
+    """
+    resume = crud.crud_resume.get(db=db, resume_id=resume_id)
     if not resume or resume.user_id != current_user.user_id:
         raise HTTPException(status_code=404, detail="Resume not found or access denied")
+
+    if resume.corrected_content:
+        return resume
+
     content = resume.content or ""
-    
     lines = content.split('\n')
-    total_errors = 0
     corrected_lines = []
     for line in lines:
         if not line.strip():
             corrected_lines.append(line)
             continue
-        result = spell_checker.check(line)
-        total_errors += result.errors
-        corrected_lines.append(result.checked)
-    corrected_sentence = '\n'.join(corrected_lines)
-    return GrammarAnalysis(error_count=total_errors, corrected_sentence=corrected_sentence)
+        try:
+            result = spell_checker.check(line)
+            corrected_lines.append(result.checked)
+        except Exception:
+            corrected_lines.append(line)
+    corrected_content = '\n'.join(corrected_lines)
 
+    update_data = {"corrected_content": corrected_content}
+    updated_resume = crud.crud_resume.update(db=db, db_obj=resume, obj_in=update_data)
+    return updated_resume
 
-@router.post("/{resume_id}/feedback", response_model=AIFeedback)
+@router.post("/{resume_id}/feedback")
 def get_ai_feedback(
     resume_id: int,
     db: Session = Depends(deps.get_db),
     current_user: models.User = Depends(deps.get_current_user),
 ) -> Any:
     """
-    Get AI feedback on a resume using Claude API.
+    Get AI feedback on a resume. If feedback doesn't exist, generate and save it.
     """
-    resume = crud.resume.get(db=db, resume_id=resume_id)
+    resume = crud.crud_resume.get(db=db, resume_id=resume_id)
     if not resume or resume.user_id != current_user.user_id:
         raise HTTPException(status_code=404, detail="Resume not found or access denied")
 
-    content = resume.content or ""
+    if resume.ai_feedback:
+        return resume
 
-    # First, check the grammar of the content, handling long texts by splitting them.
-    lines = content.split('\n')
-    total_errors = 0
-    corrected_lines = []
-
-    for line in lines:
-        if not line.strip():
-            corrected_lines.append(line)
-            continue
-
-        result = spell_checker.check(line)
-        total_errors += result.errors
-        corrected_lines.append(result.checked)
-
-    corrected_content = '\n'.join(corrected_lines)
-
+    corrected_content = resume.corrected_content
     if not corrected_content:
-        raise HTTPException(status_code=400, detail="Resume content is empty after spell check.")
+        raise HTTPException(status_code=400, detail="Corrected content not found. Please run grammar check first.")
 
     api_key = os.getenv("CLAUDE_API_KEY")
     if not api_key:
         raise HTTPException(status_code=500, detail="CLAUDE_API_KEY not set.")
-
     claude_model = os.getenv("CLAUDE_MODEL")
     if not claude_model:
         raise HTTPException(status_code=500, detail="CLAUDE_MODEL environment variable not set.")
@@ -239,28 +231,49 @@ def get_ai_feedback(
             ]
         )
         feedback_text = message.content[0].text
-        return AIFeedback(
-            error_count=total_errors,
-            corrected_sentence=corrected_content,
-            feedback=feedback_text
-        )
+
+        # --- DEBUG: Claude API 응답을 파일에 저장 ---
+        with open("claude_response.txt", "w", encoding="utf-8") as f:
+            f.write(feedback_text)
+        # -----------------------------------------
+
+        # 1. DB에 결과를 저장합니다.
+        update_data = {"ai_feedback": feedback_text}
+        crud.crud_resume.update(db=db, db_obj=resume, obj_in=update_data)
+
+        # 2. 수동으로 JSON 응답을 구성하여 반환합니다.
+        response_data = {
+            "resume_id": resume.resume_id,
+            "title": resume.title,
+            "content": resume.content,
+            "corrected_content": resume.corrected_content,
+            "ai_feedback": feedback_text,  # Claude에서 받은 텍스트를 직접 사용
+            "generated_questions": [
+                {"question_id": q.question_id, "resume_id": q.resume_id, "question_text": q.question_text}
+                for q in resume.generated_questions
+            ]
+        }
+        return response_data
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error calling Claude API: {e}")
 
 
-@router.post("/{resume_id}/generate-questions", response_model=QuestionList)
+@router.post("/{resume_id}/generate-questions", response_model=ResumeDetail)
 def generate_interview_questions(
     resume_id: int,
     db: Session = Depends(deps.get_db),
     current_user: models.User = Depends(deps.get_current_user),
 ) -> Any:
     """
-    Generate interview questions based on the resume using Gemini API.
+    Generate and save interview questions if they don't exist.
     """
-    resume = crud.resume.get(db=db, resume_id=resume_id)
+    resume = crud.crud_resume.get(db=db, resume_id=resume_id)
     if not resume or resume.user_id != current_user.user_id:
         raise HTTPException(status_code=404, detail="Resume not found or access denied")
+
+    if resume.generated_questions:
+        return resume
 
     content = resume.content or ""
     if not content:
@@ -269,7 +282,6 @@ def generate_interview_questions(
     google_api_key = os.getenv("GOOGLE_API_KEY")
     if not google_api_key:
         raise HTTPException(status_code=500, detail="GOOGLE_API_KEY not set.")
-
     gemini_model = os.getenv("GEMINI_MODEL")
     if not gemini_model:
         raise HTTPException(status_code=500, detail="GEMINI_MODEL environment variable not set.")
@@ -314,12 +326,14 @@ def generate_interview_questions(
 """
 
         response = model.generate_content(prompt)
-
-        # The response text might contain the title "예상 면접 질문 리스트".
-        # We split the text by newlines and filter out empty lines and the title.
         questions = [q.strip() for q in response.text.split('\n') if q.strip() and "예상 면접 질문 리스트" not in q]
 
-        return QuestionList(questions=questions)
+        for q_text in questions:
+            q_in = GeneratedQuestionCreate(resume_id=resume_id, question_text=q_text)
+            crud.crud_generated_question.create_question(db=db, obj_in=q_in)
+        
+        db.refresh(resume)
+        return resume
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error calling Gemini API: {e}")

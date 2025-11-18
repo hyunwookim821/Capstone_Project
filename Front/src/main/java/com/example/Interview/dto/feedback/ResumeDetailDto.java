@@ -1,30 +1,22 @@
-package com.example.Interview.dto;
+package com.example.Interview.dto.feedback;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
-
-import java.time.LocalDateTime;
 import java.util.List;
 
 @Data
-public class ResumeDto {
+public class ResumeDetailDto {
     @JsonProperty("resume_id")
     private int resumeId;
-
-    @JsonProperty("user_id")
-    private int userId;
 
     @JsonProperty("title")
     private String title;
 
-    @JsonProperty("created_at")
-    private LocalDateTime createdAt;
-
-    @JsonProperty("updated_at")
-    private LocalDateTime updatedAt;
-
     @JsonProperty("content")
     private String content;
+
+    @JsonProperty("corrected_content")
+    private String correctedContent;
 
     @JsonProperty("ai_feedback")
     private String aiFeedback;

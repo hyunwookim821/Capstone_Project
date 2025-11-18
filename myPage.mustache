@@ -344,15 +344,7 @@
             <!-- Resume Section -->
             <div id="resumeSection" class="content-section hidden">
                 <div class="bg-white rounded-2xl shadow-lg p-8 md:p-12 fade-in">
-                    <div class="flex justify-between items-center mb-6">
-                        <h1 class="text-3xl font-bold text-gray-800">내 자소서 보기</h1>
-                        <div class="flex space-x-2">
-                            <button id="sort-asc" class="sort-btn bg-gray-200 text-gray-700 px-4 py-2 rounded-lg text-sm font-semibold hover:bg-gray-300">오름차순</button>
-                            <button id="sort-desc" class="sort-btn bg-blue-500 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-blue-600">내림차순</button>
-                        </div>
-                    </div>
-
-                    {{#resumes.isEmpty}}
+                    <h1 class="text-3xl font-bold text-gray-800 mb-6">내 자소서 보기</h1>
                     <div class="text-center py-20">
                         <svg class="w-24 h-24 mx-auto text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
@@ -362,12 +354,6 @@
                             자소서 등록하기
                         </a>
                     </div>
-                    {{/resumes.isEmpty}}
-                    {{^resumes.isEmpty}}
-                    <div id="resume-list-container" class="space-y-4">
-                        <!-- Resume items will be rendered here by JavaScript -->
-                    </div>
-                    {{/resumes.isEmpty}}
                 </div>
             </div>
 
@@ -391,7 +377,6 @@
             <div id="documentsSection" class="content-section hidden">
                 <div class="bg-white rounded-2xl shadow-lg p-8 md:p-12 fade-in">
                     <h1 class="text-3xl font-bold text-gray-800 mb-6">서류 피드백 이력</h1>
-                    {{#feedbackResumes.isEmpty}}
                     <div class="text-center py-20">
                         <svg class="w-24 h-24 mx-auto text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
@@ -401,22 +386,6 @@
                             서류 피드백 받기
                         </a>
                     </div>
-                    {{/feedbackResumes.isEmpty}}
-                    {{^feedbackResumes.isEmpty}}
-                    <div class="space-y-4">
-                        {{#feedbackResumes}}
-                        <a href="/resumes/history/{{resumeId}}" class="block p-4 border rounded-lg flex justify-between items-center hover:bg-gray-50 transition-colors">
-                            <div>
-                                <p class="font-semibold text-gray-800">{{title}}</p>
-                                <p class="text-sm text-gray-500">생성일: {{createdAt}}</p>
-                            </div>
-                            <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-                            </svg>
-                        </a>
-                        {{/feedbackResumes}}
-                    </div>
-                    {{/feedbackResumes.isEmpty}}
                 </div>
             </div>
         </div>
@@ -433,49 +402,71 @@
 </footer>
 
 <script>
-    // 1. Define functions in a globally accessible scope
+    let currentUserData = JSON.parse('{{{userJson}}}');
+    const authToken = "{{token}}";
+
+    // Helper to format date
+    function formatDate(dateString) {
+        if (!dateString) return '';
+        const date = new Date(dateString);
+        // Adjust for timezone offset to prevent date from changing
+        const offset = date.getTimezoneOffset();
+        const adjustedDate = new Date(date.getTime() - (offset*60*1000));
+        return adjustedDate.toISOString().split('T')[0]; // YYYY-MM-DD
+    }
+
+    // Show section based on menu selection
     function showSection(sectionName) {
-        document.querySelectorAll('.content-section').forEach(section => section.classList.add('hidden'));
+        // Hide all sections
+        document.querySelectorAll('.content-section').forEach(section => {
+            section.classList.add('hidden');
+        });
+
+        // Remove active class from all menu items
         document.querySelectorAll('.menu-item').forEach(item => {
-            item.classList.remove('active', 'bg-blue-50', 'text-blue-600');
+            item.classList.remove('active');
             item.classList.add('text-gray-700');
         });
-        const targetSection = document.getElementById(sectionName + 'Section');
-        if(targetSection) {
+
+        // Show selected section
+        const sectionMap = {
+            'profile': 'profileSection',
+            'resume': 'resumeSection',
+            'history': 'historySection',
+            'documents': 'documentsSection'
+        };
+
+        const targetSection = document.getElementById(sectionMap[sectionName]);
+        if (targetSection) {
             targetSection.classList.remove('hidden');
         }
+
+        // Add active class to clicked menu item
         const activeItem = document.querySelector(`[data-section="${sectionName}"]`);
-        if(activeItem) {
-            activeItem.classList.add('active', 'bg-blue-50', 'text-blue-600');
+        if (activeItem) {
+            activeItem.classList.add('active');
             activeItem.classList.remove('text-gray-700');
         }
     }
 
+    // Toggle between view and edit mode
     function toggleEditMode() {
         const viewMode = document.getElementById('viewMode');
         const editMode = document.getElementById('editMode');
-        if (!viewMode || !editMode) return;
 
-        viewMode.classList.toggle('hidden');
-        editMode.classList.toggle('hidden');
-
-        if (!editMode.classList.contains('hidden')) {
-            loadEditData(window.currentUserData);
+        if (viewMode.classList.contains('hidden')) {
+            viewMode.classList.remove('hidden');
+            editMode.classList.add('hidden');
+            loadViewData(currentUserData);
         } else {
-            loadViewData(window.currentUserData);
+            viewMode.classList.add('hidden');
+            editMode.classList.remove('hidden');
+            loadEditData(currentUserData);
         }
     }
 
-    function formatDate(dateString) {
-        if (!dateString) return '';
-        const date = new Date(dateString);
-        const offset = date.getTimezoneOffset();
-        const adjustedDate = new Date(date.getTime() - (offset*60*1000));
-        return adjustedDate.toISOString().split('T')[0];
-    }
-
+    // Load data into view mode
     function loadViewData(data) {
-        if (!data) return;
         document.getElementById('view_name').textContent = data.user_name || '-';
         document.getElementById('view_email').textContent = data.email || '-';
         document.getElementById('view_phone').textContent = data.phone || '-';
@@ -491,8 +482,8 @@
         document.getElementById('view_interview_goal').textContent = data.interview_goal || '-';
     }
 
+    // Load data into edit mode
     function loadEditData(data) {
-        if (!data) return;
         document.getElementById('edit_name').value = data.user_name || '';
         document.getElementById('edit_email').value = data.email || '';
         document.getElementById('edit_phone').value = data.phone || '';
@@ -508,136 +499,58 @@
         document.getElementById('edit_interview_goal').value = data.interview_goal || '';
     }
 
-    function renderResumes(resumes, container) {
-        if (!container) return;
-        container.innerHTML = '';
-        if (!resumes || resumes.length === 0) return;
+    // Handle form submission
+    document.getElementById('profileForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
 
-        resumes.forEach(resume => {
-            const resumeEl = document.createElement('div');
-            resumeEl.className = 'border rounded-lg';
-            resumeEl.setAttribute('data-resume-id', resume.resume_id);
-            const escapedContent = resume.content ? resume.content.replace(/</g, "&lt;").replace(/>/g, "&gt;") : '';
-            resumeEl.innerHTML = `
-                <div class="p-4 flex justify-between items-center">
-                    <div class="cursor-pointer flex-grow" onclick="document.querySelector('[data-target=\'#content-${resume.resume_id}\']').click()">
-                        <p class="font-semibold text-gray-800">${resume.title || '제목 없음'}</p>
-                        <p class="text-sm text-gray-500">업로드: ${formatDate(resume.createdAt)}</p>
-                    </div>
-                    <div class="flex-shrink-0 ml-4">
-                        <button class="toggle-resume-btn text-blue-500 hover:text-blue-700 font-semibold mr-4" data-target="#content-${resume.resume_id}">보기</button>
-                        <button class="delete-resume-btn text-red-500 hover:text-red-700 font-semibold" data-id="${resume.resume_id}">삭제</button>
-                    </div>
-                </div>
-                <div id="content-${resume.resume_id}" class="hidden p-4 border-t bg-gray-50">
-                    <pre class="whitespace-pre-wrap text-gray-700">${escapedContent}</pre>
-                </div>
-            `;
-            container.appendChild(resumeEl);
-        });
-    }
+        const formData = new FormData(this);
+        const data = Object.fromEntries(formData.entries());
 
-    // 2. Main execution block
-    document.addEventListener('DOMContentLoaded', function() {
-        const authToken = "{{token}}";
-        
-        // CORRECT & SAFE DATA INJECTION
-        const currentUserData = {{{userJson}}};
-        let initialResumes = {{{resumesJson}}};
-
-        if (!currentUserData) {
-            console.error("currentUserData is null or undefined. Halting execution.");
-            document.getElementById('profileSection').innerHTML = '<p class="text-red-500 p-8">사용자 정보가 없습니다. 다시 로그인해주세요.</p>';
-            return;
-        }
-        
-        window.currentUserData = currentUserData;
-
-        // Attach event listeners
-        const profileForm = document.getElementById('profileForm');
-        if (profileForm) {
-            profileForm.addEventListener('submit', async function(e) {
-                e.preventDefault();
-                const formData = new FormData(this);
-                const data = Object.fromEntries(formData.entries());
-                for (const key in data) { if (data[key] === '') { data[key] = null; } }
-                try {
-                    const response = await fetch('/api/my-page/profile', {
-                        method: 'PUT',
-                        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + authToken },
-                        body: JSON.stringify(data),
-                    });
-                    if (response.ok) {
-                        window.currentUserData = await response.json();
-                        alert('프로필이 성공적으로 저장되었습니다!');
-                        toggleEditMode();
-                    } else {
-                        const errorData = await response.json();
-                        alert('프로필 저장 실패: ' + (errorData.message || '알 수 없는 오류.'));
-                    }
-                } catch (error) {
-                    console.error('Profile update error:', error);
-                    alert('프로필 저장 중 오류가 발생했습니다.');
-                }
-            });
+        // Convert empty strings to null for optional fields
+        for (const key in data) {
+            if (data[key] === '') {
+                data[key] = null;
+            }
         }
 
-        const sortAscBtn = document.getElementById('sort-asc');
-        const sortDescBtn = document.getElementById('sort-desc');
-        const resumeListContainer = document.getElementById('resume-list-container');
-
-        if (sortAscBtn && sortDescBtn) {
-            sortAscBtn.addEventListener('click', () => {
-                initialResumes.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
-                renderResumes(initialResumes, resumeListContainer);
+        try {
+            const response = await fetch('/api/my-page/profile', {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + authToken
+                },
+                body: JSON.stringify(data),
             });
-            sortDescBtn.addEventListener('click', () => {
-                initialResumes.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-                renderResumes(initialResumes, resumeListContainer);
-            });
-        }
 
-        if (resumeListContainer) {
-            resumeListContainer.addEventListener('click', async function(event) {
-                const target = event.target;
-                if (target.classList.contains('toggle-resume-btn')) {
-                    const targetId = target.getAttribute('data-target');
-                    const targetContent = document.querySelector(targetId);
-                    if (targetContent) {
-                        targetContent.classList.toggle('hidden');
-                        target.textContent = targetContent.classList.contains('hidden') ? '보기' : '접기';
-                    }
-                }
-                if (target.classList.contains('delete-resume-btn')) {
-                    const resumeId = target.getAttribute('data-id');
-                    if (confirm('정말로 이 자소서를 삭제하시겠습니까?')) {
-                        try {
-                            const response = await fetch(`/api/resumes/${resumeId}`, {
-                                method: 'DELETE',
-                                headers: { 'Authorization': 'Bearer ' + authToken }
-                            });
-                            if (response.ok) {
-                                document.querySelector(`[data-resume-id="${resumeId}"]`).remove();
-                                initialResumes = initialResumes.filter(r => r.resumeId != resumeId);
-                                alert('삭제되었습니다.');
-                            } else { throw new Error('삭제 실패'); }
-                        } catch (error) {
-                            console.error('Delete error:', error);
-                            alert('삭제 중 오류 발생');
-                        }
-                    }
-                }
-            });
-        }
-
-        // Initial Page Setup
-        loadViewData(window.currentUserData);
-        showSection('profile');
-        if (initialResumes && initialResumes.length > 0) {
-            renderResumes(initialResumes, resumeListContainer);
-            if(sortDescBtn) sortDescBtn.click();
+            if (response.ok) {
+                const updatedUser = await response.json();
+                currentUserData = updatedUser; // Update local data
+                alert('프로필이 성공적으로 저장되었습니다!');
+                toggleEditMode(); // Switch back to view mode
+            } else {
+                const errorData = await response.json();
+                alert('프로필 저장 실패: ' + (errorData.message || '알 수 없는 오류가 발생했습니다.'));
+            }
+        } catch (error) {
+            console.error('Profile update error:', error);
+            alert('프로필 저장 중 오류가 발생했습니다.');
         }
     });
+
+    // Initialize page
+    document.addEventListener('DOMContentLoaded', function() {
+        
+
+        if (currentUserData) {
+            loadViewData(currentUserData);
+        }
+
+        const fadeElements = document.querySelectorAll('.fade-in');
+        fadeElements.forEach((el, index) => {
+            setTimeout(() => {
+                el.style.opacity = '1';
+            }, index * 100);
+        });
+    });
 </script>
-</body>
-</html>

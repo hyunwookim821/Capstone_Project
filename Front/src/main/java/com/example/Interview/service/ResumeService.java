@@ -1,65 +1,60 @@
 package com.example.Interview.service;
 
 import com.example.Interview.dto.ResumeDto;
-import org.springframework.core.io.buffer.DataBuffer;
-import org.springframework.core.io.buffer.DataBufferUtils;
+import com.example.Interview.dto.feedback.ResumeDetailDto; // ResumeDetailDto 임포트
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
 import org.springframework.http.client.MultipartBodyBuilder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.WebClient;
-import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
-import java.io.IOException;
 import java.util.List;
 
 @Service
+@RequiredArgsConstructor
 public class ResumeService {
 
     private final WebClient webClient;
 
-    public ResumeService(WebClient webClient) {
-        this.webClient = webClient;
-    }
-
-    public List<ResumeDto> getResumes(String token) {
+    public Mono<List<ResumeDto>> getResumes(String token) {
         return webClient.get()
                 .uri("/resumes/")
                 .header("Authorization", "Bearer " + token)
                 .retrieve()
                 .bodyToFlux(ResumeDto.class)
-                .collectList()
-                .block();
+                .collectList();
     }
 
-    public ResumeDto getResume(Long id, String token) {
+    public Mono<ResumeDetailDto> getResume(Long id, String token) {
         return webClient.get()
                 .uri("/resumes/" + id)
                 .header("Authorization", "Bearer " + token)
                 .retrieve()
-                .bodyToMono(ResumeDto.class)
-                .block();
+                .bodyToMono(ResumeDetailDto.class);
     }
 
-    public ResumeDto uploadResume(String title, MultipartFile file, String token) {
+    public Mono<ResumeDto> createResume(String token, MultipartFile file) {
         MultipartBodyBuilder builder = new MultipartBodyBuilder();
-        builder.part("title", title);
-        try {
-            builder.part("file", file.getResource());
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to read file for upload", e);
-        }
-
-        System.out.println("Authorization Header being sent: " + "Bearer " + token); // Debugging line
+        builder.part("title", file.getOriginalFilename());
+        builder.part("file", file.getResource());
 
         return webClient.post()
                 .uri("/resumes/")
-                .header("Authorization", "Bearer " + token)
+                .headers(headers -> headers.setBearerAuth(token))
                 .contentType(MediaType.MULTIPART_FORM_DATA)
                 .body(BodyInserters.fromMultipartData(builder.build()))
                 .retrieve()
-                .bodyToMono(ResumeDto.class)
-                .block();
+                .bodyToMono(ResumeDto.class);
+    }
+
+    public Mono<Void> deleteResume(Long id, String token) {
+        return webClient.delete()
+                .uri("/resumes/" + id)
+                .header("Authorization", "Bearer " + token)
+                .retrieve()
+                .bodyToMono(Void.class);
     }
 }
