@@ -37,9 +37,14 @@ public class InterviewService {
                 .bodyToMono(AnalysisDto.class);
     }
 
-    // 컴파일 에러 해결을 위한 임시 플레이스홀더 메소드
     public Mono<Void> sendVideoAnalysisData(Long interviewId, List<Map<String, Object>> landmarkData, String token) {
-        // TODO: 실제 백엔드 API 연동 로직 구현 필요
-        return Mono.empty();
+        Map<String, Object> requestBody = Map.of("landmarks", landmarkData);
+
+        return webClient.post()
+                .uri("/interviews/{interviewId}/video-analysis", interviewId)
+                .headers(headers -> headers.setBearerAuth(token))
+                .bodyValue(requestBody)
+                .retrieve()
+                .bodyToMono(Void.class);
     }
 }

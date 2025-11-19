@@ -508,6 +508,25 @@
         document.getElementById('edit_interview_goal').value = data.interview_goal || '';
     }
 
+    function formatDateTime(dateString) {
+        if (!dateString) return '알 수 없음';
+        try {
+            const date = new Date(dateString);
+            if (isNaN(date.getTime())) return '알 수 없음';
+
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            const hours = String(date.getHours()).padStart(2, '0');
+            const minutes = String(date.getMinutes()).padStart(2, '0');
+
+            return `${year}-${month}-${day} ${hours}:${minutes}`;
+        } catch (e) {
+            console.error('Date formatting error:', e);
+            return '알 수 없음';
+        }
+    }
+
     function renderResumes(resumes, container) {
         if (!container) return;
         container.innerHTML = '';
@@ -516,20 +535,26 @@
         resumes.forEach(resume => {
             const resumeEl = document.createElement('div');
             resumeEl.className = 'border rounded-lg';
-            resumeEl.setAttribute('data-resume-id', resume.resume_id);
+            resumeEl.setAttribute('data-resume-id', resume.resume_id || resume.resumeId);
             const escapedContent = resume.content ? resume.content.replace(/</g, "&lt;").replace(/>/g, "&gt;") : '';
+
+            // Handle both snake_case (from Python) and camelCase (from DTO)
+            const resumeId = resume.resume_id || resume.resumeId;
+            const createdAt = resume.created_at || resume.createdAt;
+            const title = resume.title || '제목 없음';
+
             resumeEl.innerHTML = `
                 <div class="p-4 flex justify-between items-center">
-                    <div class="cursor-pointer flex-grow" onclick="document.querySelector('[data-target=\'#content-${resume.resume_id}\']').click()">
-                        <p class="font-semibold text-gray-800">${resume.title || '제목 없음'}</p>
-                        <p class="text-sm text-gray-500">업로드: ${formatDate(resume.createdAt)}</p>
+                    <div class="cursor-pointer flex-grow" onclick="document.querySelector('[data-target=\'#content-${resumeId}\']').click()">
+                        <p class="font-semibold text-gray-800">${title}</p>
+                        <p class="text-sm text-gray-500">업로드: ${formatDateTime(createdAt)}</p>
                     </div>
                     <div class="flex-shrink-0 ml-4">
-                        <button class="toggle-resume-btn text-blue-500 hover:text-blue-700 font-semibold mr-4" data-target="#content-${resume.resume_id}">보기</button>
-                        <button class="delete-resume-btn text-red-500 hover:text-red-700 font-semibold" data-id="${resume.resume_id}">삭제</button>
+                        <button class="toggle-resume-btn text-blue-500 hover:text-blue-700 font-semibold mr-4" data-target="#content-${resumeId}">보기</button>
+                        <button class="delete-resume-btn text-red-500 hover:text-red-700 font-semibold" data-id="${resumeId}">삭제</button>
                     </div>
                 </div>
-                <div id="content-${resume.resume_id}" class="hidden p-4 border-t bg-gray-50">
+                <div id="content-${resumeId}" class="hidden p-4 border-t bg-gray-50">
                     <pre class="whitespace-pre-wrap text-gray-700">${escapedContent}</pre>
                 </div>
             `;
@@ -586,14 +611,41 @@
         const sortDescBtn = document.getElementById('sort-desc');
         const resumeListContainer = document.getElementById('resume-list-container');
 
+        function updateSortButtons(activeBtn) {
+            [sortAscBtn, sortDescBtn].forEach(btn => {
+                if (btn) {
+                    btn.classList.remove('bg-blue-500', 'text-white');
+                    btn.classList.add('bg-gray-200', 'text-gray-700');
+                }
+            });
+            if (activeBtn) {
+                activeBtn.classList.remove('bg-gray-200', 'text-gray-700');
+                activeBtn.classList.add('bg-blue-500', 'text-white');
+            }
+        }
+
         if (sortAscBtn && sortDescBtn) {
             sortAscBtn.addEventListener('click', () => {
-                initialResumes.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+                console.log('Sorting ascending...');
+                // Handle both snake_case and camelCase
+                initialResumes.sort((a, b) => {
+                    const dateA = new Date(a.created_at || a.createdAt);
+                    const dateB = new Date(b.created_at || b.createdAt);
+                    return dateA - dateB;
+                });
                 renderResumes(initialResumes, resumeListContainer);
+                updateSortButtons(sortAscBtn);
             });
             sortDescBtn.addEventListener('click', () => {
-                initialResumes.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+                console.log('Sorting descending...');
+                // Handle both snake_case and camelCase
+                initialResumes.sort((a, b) => {
+                    const dateA = new Date(a.created_at || a.createdAt);
+                    const dateB = new Date(b.created_at || b.createdAt);
+                    return dateB - dateA;
+                });
                 renderResumes(initialResumes, resumeListContainer);
+                updateSortButtons(sortDescBtn);
             });
         }
 
@@ -618,7 +670,8 @@
                             });
                             if (response.ok) {
                                 document.querySelector(`[data-resume-id="${resumeId}"]`).remove();
-                                initialResumes = initialResumes.filter(r => r.resumeId != resumeId);
+                                // Handle both snake_case and camelCase
+                                initialResumes = initialResumes.filter(r => (r.resume_id || r.resumeId) != resumeId);
                                 alert('삭제되었습니다.');
                             } else { throw new Error('삭제 실패'); }
                         } catch (error) {
@@ -634,8 +687,14 @@
         loadViewData(window.currentUserData);
         showSection('profile');
         if (initialResumes && initialResumes.length > 0) {
+            // Sort by descending (newest first) initially
+            initialResumes.sort((a, b) => {
+                const dateA = new Date(a.created_at || a.createdAt);
+                const dateB = new Date(b.created_at || b.createdAt);
+                return dateB - dateA;
+            });
             renderResumes(initialResumes, resumeListContainer);
-            if(sortDescBtn) sortDescBtn.click();
+            updateSortButtons(sortDescBtn);
         }
     });
 </script>

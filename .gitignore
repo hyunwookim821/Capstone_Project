@@ -95,6 +95,7 @@ env.bak/
 venv.bak/
 audio_files/
 *.pdf
+CLAUDE.md
 
 # EXE
 ffmpeg.exe

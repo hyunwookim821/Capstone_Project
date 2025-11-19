@@ -24,6 +24,7 @@ class AnswerBase(BaseModel):
 
 class AnswerCreate(AnswerBase):
     question_id: int
+    whisper_result: Optional[Dict[str, Any]] = None
 
 class AnswerUpdate(AnswerBase):
     pass

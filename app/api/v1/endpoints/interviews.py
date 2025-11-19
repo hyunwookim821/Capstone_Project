@@ -13,6 +13,7 @@ import httpx
 from pydub import AudioSegment
 from dotenv import load_dotenv
 from sqlalchemy.orm import Session
+from sqlalchemy.exc import IntegrityError
 
 from app.db.session import SessionLocal
 from app import crud, models
@@ -29,6 +30,18 @@ if os.path.exists("ffmpeg.exe"):
     AudioSegment.converter = os.path.abspath("ffmpeg.exe")
 
 router = APIRouter()
+
+# Module-level Whisper model cache (better than using globals())
+_whisper_model = None
+
+def get_whisper_model():
+    """Lazy-load and cache the Whisper model."""
+    global _whisper_model
+    if _whisper_model is None:
+        print("Loading Whisper model for the first time...")
+        _whisper_model = whisper.load_model("small")
+        print("Whisper model loaded successfully.")
+    return _whisper_model
 
 @router.post("/", response_model=InterviewSession)
 def create_interview_session(
@@ -254,6 +267,16 @@ async def get_interview_results(
 
 ### **3. 커뮤니케이션 스킬 (음성 및 영상 포함)**
 *   **점수:** [1-5점]
+
+*   ** 음성 분석 (말하기 습관) **
+*   평균 말하기 속도: (수치)WPM
+*   머뭇거림 (침묵) 비율: (수치)%
+
+*   영상 분석 (시각적 태도)
+*   시선 안정성: (수치) (낮을수록 안정적)
+*   표정 안정성: (수치) (낮을수록 안정적)
+*   자세 안정성: (수치) (낮을수록 안정적)
+
 *   **👍 잘한 점:**
     *   (자신감 있는 표현, 안정적인 시선 처리, 긍정적인 표정 등 칭찬)
 *   **👎 개선할 점:**
@@ -293,7 +316,7 @@ async def get_interview_results(
             feedback_text = response_data['content'][0]['text']
 
         analysis_create = AnalysisCreate(
-            interview_id=interview_id, 
+            interview_id=interview_id,
             feedback_text=feedback_text,
             speech_rate=avg_speech_rate,
             silence_ratio=avg_silence_ratio,
@@ -301,8 +324,21 @@ async def get_interview_results(
             expression_stability=expression_stability,
             posture_stability=posture_stability
         )
-        new_analysis = crud.analysis.create_analysis(db=db, obj_in=analysis_create)
-        return new_analysis
+
+        try:
+            new_analysis = crud.analysis.create_analysis(db=db, obj_in=analysis_create)
+            return new_analysis
+        except IntegrityError:
+            # Another request already created the analysis (race condition)
+            # Rollback and fetch the existing analysis
+            db.rollback()
+            print(f"Analysis for interview {interview_id} already exists (race condition detected). Fetching existing analysis.")
+            existing_analysis = crud.analysis.get_analysis_by_interview(db, interview_id=interview_id)
+            if existing_analysis:
+                return existing_analysis
+            else:
+                # This should rarely happen
+                raise HTTPException(status_code=500, detail="Failed to create or retrieve analysis")
 
     except httpx.HTTPStatusError as e:
         error_message = f"Claude API request failed with status {e.response.status_code} and response: {e.response.text}"
@@ -320,21 +356,24 @@ async def websocket_interview(
     interview_id: int,
     token: str,
 ):
-    await websocket.accept()
     db: Session = SessionLocal()
     try:
+        # Authenticate user BEFORE accepting the WebSocket connection
         try:
             user = deps.get_user_from_token(db=db, token=token)
         except HTTPException as e:
-            await websocket.send_json({"type": "error", "message": f"Authentication failed: {e.detail}"})
-            await websocket.close(code=1008)
+            print(f"WebSocket authentication failed for interview {interview_id}: {e.detail}")
+            await websocket.close(code=1008, reason=f"Authentication failed: {e.detail}")
             return
 
         interview = crud.interview.get_interview(db, interview_id=interview_id)
         if not interview or interview.user_id != user.user_id:
-            await websocket.send_json({"type": "error", "message": "Interview not found or access denied."})
-            await websocket.close(code=1008)
+            print(f"WebSocket access denied for interview {interview_id}, user {user.user_id}")
+            await websocket.close(code=1008, reason="Interview not found or access denied")
             return
+
+        # Accept connection only after successful authentication and authorization
+        await websocket.accept()
 
         questions = crud.interview.get_questions_by_interview(db, interview_id=interview_id)
         if not questions:
@@ -383,10 +422,9 @@ async def websocket_interview(
                 audio_segment.export(audio_path, format="wav")
                 print(f"Successfully converted and saved audio to {audio_path}")
 
-                if 'whisper_model' not in globals():
-                    globals()['whisper_model'] = whisper.load_model("small")
-                
-                result = globals()['whisper_model'].transcribe(audio_path, language="ko")
+                # Use the cached Whisper model
+                model = get_whisper_model()
+                result = model.transcribe(audio_path, language="ko")
                 print(f"Whisper transcription result: {result}")
                 answer_text = result.get("text", "")
             except Exception as e:

@@ -1,4 +1,11 @@
 {{>layout/header}}
+<!-- MediaPipe CDN -->
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/control_utils/control_utils.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose/pose.js" crossorigin="anonymous"></script>
+
 <div class="h-20 md:h-24"></div>
 
 <main class="container mx-auto px-6 py-12">
@@ -64,10 +71,22 @@
 
             <!-- 오른쪽: 웹캠 및 컨트롤 버튼 -->
             <div class="lg:col-span-2 bg-black rounded-3xl p-4 shadow-lg relative">
-                <video id="user-video" class="w-full h-full rounded-2xl" autoplay muted playsinline></video>
-                <div class="absolute bottom-8 left-1/2 -translate-x-1/2">
+                <div class="relative w-full h-full">
+                    <video id="user-video" class="w-full h-full rounded-2xl" autoplay muted playsinline></video>
+                    <canvas id="debug-canvas" class="absolute top-0 left-0 w-full h-full rounded-2xl"></canvas>
+                    <!-- Debug Info Overlay -->
+                    <div id="debug-info" class="absolute top-4 left-4 bg-black bg-opacity-70 text-white px-4 py-3 rounded-lg text-sm font-mono">
+                        <div>Frames: <span id="frame-count">0</span></div>
+                        <div>Face: <span id="face-status" class="text-gray-400">대기중</span></div>
+                        <div>Pose: <span id="pose-status" class="text-gray-400">대기중</span></div>
+                    </div>
+                </div>
+                <div class="absolute bottom-8 left-1/2 -translate-x-1/2 flex gap-4">
                     <button id="next-question-btn" class="bg-blue-500 text-white px-8 py-4 rounded-full text-lg font-semibold shadow-lg hover:bg-blue-600 transition-colors">
                         다음 질문
+                    </button>
+                    <button id="toggle-debug-btn" class="bg-gray-700 text-white px-6 py-4 rounded-full text-sm font-semibold shadow-lg hover:bg-gray-600 transition-colors">
+                        디버그 ON
                     </button>
                 </div>
             </div>
@@ -99,6 +118,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     const progressBar = document.getElementById('progress-bar');
     const currentQuestionNumSpan = document.getElementById('current-question-num');
     const totalQuestionNumSpan = document.getElementById('total-question-num');
+    const debugCanvas = document.getElementById('debug-canvas');
+    const debugCtx = debugCanvas.getContext('2d');
+    const toggleDebugBtn = document.getElementById('toggle-debug-btn');
 
     // State
     let mediaRecorder;
@@ -107,6 +129,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     let webSocket;
     let interviewId;
     let currentQuestionIndex = 0;
+
+    // Video analysis state
+    let landmarkData = [];  // Stores all landmark frames
+    let faceMesh = null;
+    let pose = null;
+    let lastLandmarkTime = 0;
+    const LANDMARK_SAMPLE_INTERVAL = 500;  // Capture landmarks every 500ms
+    let debugMode = true;  // Debug visualization enabled by default
 
     // 1. 초기화: 장치 목록 가져오기 및 권한 요청
     async function init() {
@@ -139,11 +169,181 @@ document.addEventListener('DOMContentLoaded', async () => {
                 audioSelect.appendChild(option);
             });
 
+            // Initialize MediaPipe for video analysis
+            initializeMediaPipe();
+
         } catch (err) {
             console.error("Error accessing media devices.", err);
             permissionsAlert.classList.remove('hidden');
             startBtn.disabled = true;
         }
+    }
+
+    // Initialize MediaPipe Face Mesh and Pose
+    function initializeMediaPipe() {
+        // Face Mesh
+        faceMesh = new FaceMesh({
+            locateFile: (file) => {
+                return `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${file}`;
+            }
+        });
+        faceMesh.setOptions({
+            maxNumFaces: 1,
+            refineLandmarks: true,
+            minDetectionConfidence: 0.5,
+            minTrackingConfidence: 0.5
+        });
+        faceMesh.onResults(onFaceMeshResults);
+
+        // Pose
+        pose = new Pose({
+            locateFile: (file) => {
+                return `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}`;
+            }
+        });
+        pose.setOptions({
+            modelComplexity: 1,
+            smoothLandmarks: true,
+            minDetectionConfidence: 0.5,
+            minTrackingConfidence: 0.5
+        });
+        pose.onResults(onPoseResults);
+
+        console.log("MediaPipe initialized");
+    }
+
+    let tempFaceLandmarks = null;
+    let tempPoseLandmarks = null;
+
+    function onFaceMeshResults(results) {
+        if (results.multiFaceLandmarks && results.multiFaceLandmarks.length > 0) {
+            tempFaceLandmarks = results.multiFaceLandmarks[0];
+            updateDebugStatus('face', true);
+            saveLandmarkFrame();
+
+            // Draw debug visualization
+            if (debugMode) {
+                drawFaceMesh(results);
+            }
+        } else {
+            updateDebugStatus('face', false);
+        }
+    }
+
+    function onPoseResults(results) {
+        if (results.poseLandmarks) {
+            tempPoseLandmarks = results.poseLandmarks;
+            updateDebugStatus('pose', true);
+            saveLandmarkFrame();
+
+            // Draw debug visualization
+            if (debugMode) {
+                drawPose(results);
+            }
+        } else {
+            updateDebugStatus('pose', false);
+        }
+    }
+
+    // Update debug info overlay
+    function updateDebugStatus(type, detected) {
+        const statusSpan = document.getElementById(`${type}-status`);
+        if (statusSpan) {
+            if (detected) {
+                statusSpan.textContent = '감지됨';
+                statusSpan.className = 'text-green-400';
+            } else {
+                statusSpan.textContent = '미감지';
+                statusSpan.className = 'text-red-400';
+            }
+        }
+    }
+
+    // Set canvas size to match video
+    function resizeCanvas() {
+        debugCanvas.width = userVideo.videoWidth;
+        debugCanvas.height = userVideo.videoHeight;
+    }
+
+    // Draw Face Mesh on canvas
+    function drawFaceMesh(results) {
+        if (!debugCanvas.width) resizeCanvas();
+
+        debugCtx.save();
+        debugCtx.clearRect(0, 0, debugCanvas.width, debugCanvas.height);
+
+        if (results.multiFaceLandmarks) {
+            for (const landmarks of results.multiFaceLandmarks) {
+                // Draw face mesh connections
+                window.drawConnectors(debugCtx, landmarks, window.FACEMESH_TESSELATION,
+                    {color: '#C0C0C070', lineWidth: 1});
+                window.drawConnectors(debugCtx, landmarks, window.FACEMESH_RIGHT_EYE,
+                    {color: '#FF3030', lineWidth: 2});
+                window.drawConnectors(debugCtx, landmarks, window.FACEMESH_LEFT_EYE,
+                    {color: '#30FF30', lineWidth: 2});
+                window.drawConnectors(debugCtx, landmarks, window.FACEMESH_LIPS,
+                    {color: '#E0E0E0', lineWidth: 2});
+            }
+        }
+
+        debugCtx.restore();
+    }
+
+    // Draw Pose on canvas
+    function drawPose(results) {
+        if (!debugCanvas.width) resizeCanvas();
+
+        if (results.poseLandmarks) {
+            // Draw pose connections
+            window.drawConnectors(debugCtx, results.poseLandmarks, window.POSE_CONNECTIONS,
+                {color: '#00FF00', lineWidth: 4});
+            window.drawLandmarks(debugCtx, results.poseLandmarks,
+                {color: '#FF0000', lineWidth: 2, radius: 6});
+        }
+    }
+
+    // Toggle debug mode
+    toggleDebugBtn.addEventListener('click', () => {
+        debugMode = !debugMode;
+        toggleDebugBtn.textContent = debugMode ? '디버그 ON' : '디버그 OFF';
+        toggleDebugBtn.classList.toggle('bg-gray-700', debugMode);
+        toggleDebugBtn.classList.toggle('bg-green-600', !debugMode);
+
+        if (!debugMode) {
+            // Clear canvas when debug mode is off
+            debugCtx.clearRect(0, 0, debugCanvas.width, debugCanvas.height);
+        }
+    });
+
+    function saveLandmarkFrame() {
+        const now = Date.now();
+        if (now - lastLandmarkTime < LANDMARK_SAMPLE_INTERVAL) {
+            return;  // Skip this frame (sampling)
+        }
+
+        if (tempFaceLandmarks && tempPoseLandmarks) {
+            landmarkData.push({
+                face: tempFaceLandmarks,
+                pose: tempPoseLandmarks
+            });
+            lastLandmarkTime = now;
+
+            // Update frame count display
+            const frameCountSpan = document.getElementById('frame-count');
+            if (frameCountSpan) {
+                frameCountSpan.textContent = landmarkData.length;
+            }
+
+            console.log(`Captured landmark frame ${landmarkData.length}`);
+        }
+    }
+
+    async function processVideoFrame() {
+        if (userVideo.readyState === userVideo.HAVE_ENOUGH_DATA && faceMesh && pose) {
+            await faceMesh.send({image: userVideo});
+            await pose.send({image: userVideo});
+        }
+        requestAnimationFrame(processVideoFrame);
     }
 
     // 2. 면접 시작 처리
@@ -172,6 +372,9 @@ document.addEventListener('DOMContentLoaded', async () => {
             // UI 전환
             setupStep.classList.add('hidden');
             interviewStep.classList.remove('hidden');
+
+            // Start video frame processing for landmark extraction
+            processVideoFrame();
 
             // 웹소켓 연결
             const wsUrl = `ws://127.0.0.1:8000/api/v1/interviews/ws/${interviewId}?token=${token}`;
@@ -205,16 +408,53 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     // 4. 웹소켓 메시지 처리
-    function handleWebSocketMessage(message) {
+    async function handleWebSocketMessage(message) {
         console.log("Received message:", message);
         if (message.type === 'question') {
             questionDisplay.textContent = message.text;
             currentQuestionIndex = message.question_number;
+            if (message.total_questions) {
+                totalQuestionNumSpan.textContent = message.total_questions;
+            }
             updateProgress();
         } else if (message.type === 'system' && message.status === 'finished') {
+            console.log('Interview finished. Sending video analysis data...');
+
+            // Send landmark data to backend
+            await sendVideoAnalysisData();
+
             alert('면접이 종료되었습니다. 분석 결과 페이지로 이동합니다.');
-            // TODO: 결과 페이지로 이동
             window.location.href = `/interview/${interviewId}/results`;
+        }
+    }
+
+    // Send video analysis data to backend
+    async function sendVideoAnalysisData() {
+        if (landmarkData.length === 0) {
+            console.log('No landmark data collected. Skipping video analysis.');
+            return;
+        }
+
+        try {
+            const token = "{{token}}";
+            const payload = { landmarks: landmarkData };  // Wrap in object with 'landmarks' key
+
+            const response = await fetch(`/api/interviews/${interviewId}/video-analysis`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(payload)
+            });
+
+            if (!response.ok) {
+                console.error('Failed to send video analysis data:', await response.text());
+            } else {
+                console.log(`Successfully sent ${landmarkData.length} landmark frames for analysis.`);
+            }
+        } catch (error) {
+            console.error('Error sending video analysis data:', error);
         }
     }
 
