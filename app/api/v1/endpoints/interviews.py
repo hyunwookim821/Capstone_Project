@@ -433,7 +433,7 @@ async def websocket_interview(
             
             try:
                 tts_model_name = os.getenv("TTS_MODEL_NAME", "gemini-2.5-flash-tts")
-                tts_voice_name = os.getenv("TTS_VOICE_NAME", "ko-KR-Neural2-C")
+                tts_voice_name = os.getenv("TTS_VOICE_NAME", "Charon")  # Gemini TTS voice
 
                 # TTS용 텍스트 정제 (이모티콘, 태그 제거)
                 cleaned_text = clean_text_for_tts(question.question_text)
@@ -441,17 +441,64 @@ async def websocket_interview(
                 print(f"Cleaned for TTS: {cleaned_text}")
 
                 tts_client = tts.TextToSpeechClient()
-                synthesis_input = tts.SynthesisInput(text=cleaned_text)  # 정제된 텍스트 사용
-                voice = tts.VoiceSelectionParams(
-                    language_code="ko-KR",
-                    name=tts_voice_name,
-                    model_name=tts_model_name
+
+                # Gemini TTS 모델 체크
+                is_gemini_tts = "gemini" in tts_model_name.lower()
+
+                # synthesis_input 생성
+                if is_gemini_tts:
+                    # Gemini TTS: prompt 사용 시도
+                    try:
+                        style_prompt = os.getenv(
+                            "TTS_STYLE_PROMPT",
+                            "당신은 경험이 풍부한 전문 면접관입니다. 친절하면서도 전문적인 톤으로, "
+                            "명확하고 또렷하게 질문을 전달합니다. 아주 살짝 빠른 속도로 말하며, "
+                            "지원자가 편안하게 답변할 수 있도록 격려적인 분위기를 조성합니다."
+                        )
+                        synthesis_input = tts.SynthesisInput(
+                            text=cleaned_text,
+                            prompt=style_prompt
+                        )
+                        print(f"Attempting Gemini TTS with style prompt")
+                    except:
+                        # Fallback: prompt 없이
+                        synthesis_input = tts.SynthesisInput(text=cleaned_text)
+                        print(f"Gemini TTS fallback: using text only")
+                else:
+                    # Standard TTS: text만 사용
+                    synthesis_input = tts.SynthesisInput(text=cleaned_text)
+                    print(f"Using Standard TTS")
+
+                # Voice 설정
+                if is_gemini_tts:
+                    # Gemini TTS 음성은 model_name 필수
+                    voice = tts.VoiceSelectionParams(
+                        language_code="ko-KR",
+                        name=tts_voice_name,
+                        model_name=tts_model_name
+                    )
+                else:
+                    # Standard TTS는 model_name 불필요
+                    voice = tts.VoiceSelectionParams(
+                        language_code="ko-KR",
+                        name=tts_voice_name
+                    )
+
+                audio_config = tts.AudioConfig(
+                    audio_encoding=tts.AudioEncoding.MP3
                 )
-                audio_config = tts.AudioConfig(audio_encoding=tts.AudioEncoding.MP3)
-                response = tts_client.synthesize_speech(input=synthesis_input, voice=voice, audio_config=audio_config)
+
+                response = tts_client.synthesize_speech(
+                    input=synthesis_input,
+                    voice=voice,
+                    audio_config=audio_config
+                )
+
                 await websocket.send_bytes(response.audio_content)
+                print(f"TTS audio sent successfully using {tts_model_name} with voice {tts_voice_name}")
             except Exception as tts_error:
                 print(f"TTS Error: {tts_error}")
+                print(f"TTS Error details: {type(tts_error).__name__}: {str(tts_error)}")
                 await websocket.send_json({"type": "error", "message": "Could not generate audio for the question."})
 
             print("Waiting to receive audio data as base64 text...")
