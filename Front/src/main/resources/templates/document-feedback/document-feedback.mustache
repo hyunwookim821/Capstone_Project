@@ -1,10 +1,59 @@
 {{>layout/header}}
 <div class="h-20 md:h-24"></div>
 
+<style>
+    .fade-in {
+        animation: fadeIn 0.8s ease-out;
+    }
+    .fade-in-delay {
+        animation: fadeIn 0.8s ease-out 0.2s both;
+    }
+    .fade-in-delay-2 {
+        animation: fadeIn 0.8s ease-out 0.4s both;
+    }
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    .hover-scale {
+        transition: transform 0.3s ease;
+    }
+    .hover-scale:hover {
+        transform: scale(1.05);
+    }
+    .gradient-icon {
+        background: linear-gradient(135deg, #60a5fa 0%, #c084fc 100%);
+    }
+    .file-upload-zone {
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }
+    .file-upload-zone:hover {
+        border-color: #60a5fa;
+        background: linear-gradient(135deg, rgba(96, 165, 250, 0.05) 0%, rgba(192, 132, 252, 0.05) 100%);
+        transform: translateY(-2px);
+    }
+    .option-card {
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }
+    .option-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 25px -5px rgba(96, 165, 250, 0.3);
+    }
+    .spinner {
+        animation: spin 1s linear infinite;
+    }
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+</style>
+
 <!-- Main Content -->
 <main class="container mx-auto px-6 py-12">
     <div class="text-center mb-12 fade-in">
-        <div class="w-20 h-20 bg-gradient-to-br from-blue-400 to-purple-400 rounded-3xl flex items-center justify-center mx-auto mb-6">
+        <div class="w-20 h-20 gradient-icon rounded-3xl flex items-center justify-center mx-auto mb-6 hover-scale shadow-lg">
             <svg class="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
             </svg>
@@ -20,28 +69,48 @@
     <div class="max-w-4xl mx-auto">
         <!-- 업로드 섹션 -->
         <div class="bg-white rounded-3xl p-8 shadow-lg mb-8 fade-in">
-            <h2 class="text-2xl font-bold text-gray-800 mb-6">서류 업로드</h2>
+            <div class="flex items-center mb-6">
+                <div class="w-10 h-10 gradient-icon rounded-xl flex items-center justify-center mr-3">
+                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                    </svg>
+                </div>
+                <h2 class="text-2xl font-bold text-gray-800">서류 업로드</h2>
+            </div>
 
             <div class="flex justify-center">
                 <!-- 통합 업로드 -->
-                <div class="w-full md:w-3/4 lg:w-1/2 border-2 border-dashed border-blue-300 rounded-2xl p-8 text-center hover:border-blue-400 transition-colors">
-                    <div class="w-16 h-16 bg-blue-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                        <svg class="w-8 h-8 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div class="w-full file-upload-zone border-2 border-dashed border-blue-300 rounded-2xl p-8 text-center">
+                    <div class="w-20 h-20 gradient-icon rounded-2xl flex items-center justify-center mx-auto mb-4 hover-scale shadow-md">
+                        <svg class="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
                         </svg>
                     </div>
-                    <h3 class="text-lg font-semibold text-gray-800 mb-2">이력서 또는 자기소개서</h3>
-                    <p class="text-gray-600 mb-4">PDF, DOC, DOCX 파일을 업로드해주세요</p>
+                    <h3 class="text-xl font-semibold text-gray-800 mb-2">이력서 또는 자기소개서</h3>
+                    <p class="text-gray-600 mb-6">PDF, DOC, DOCX 파일을 업로드해주세요</p>
 
                     <input type="file" id="documentInput" accept=".pdf,.doc,.docx" class="hidden">
-                    <label for="documentInput" id="documentLabel" class="bg-blue-400 text-white px-6 py-3 rounded-xl hover:bg-blue-500 transition-colors cursor-pointer inline-block">
-                        파일 선택
+                    <label for="documentInput" id="documentLabel" class="bg-gradient-to-r from-blue-400 to-purple-400 text-white px-8 py-3 rounded-xl hover:from-blue-500 hover:to-purple-500 transition-all cursor-pointer inline-flex items-center space-x-2 shadow-md hover-scale">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path>
+                        </svg>
+                        <span class="font-semibold">파일 선택</span>
                     </label>
 
-                    <div id="fileDisplayArea" class="hidden mt-4">
-                        <span id="selectedFileName" class="text-gray-700 font-medium mr-2"></span>
-                        <button id="changeFileButton" class="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-300 transition-colors">
-                            파일 변경
+                    <div id="fileDisplayArea" class="hidden mt-6 bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl p-4 flex items-center justify-between">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-10 h-10 bg-gradient-to-br from-blue-400 to-purple-400 rounded-lg flex items-center justify-center">
+                                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                            </div>
+                            <span id="selectedFileName" class="text-gray-800 font-medium"></span>
+                        </div>
+                        <button id="changeFileButton" class="bg-white text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-100 transition-colors shadow-sm flex items-center space-x-2">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                            </svg>
+                            <span>파일 변경</span>
                         </button>
                     </div>
                 </div>
@@ -50,36 +119,43 @@
 
         <!-- 분석 옵션 -->
         <div class="bg-white rounded-3xl p-8 shadow-lg mb-8 fade-in-delay">
-            <h2 class="text-2xl font-bold text-gray-800 mb-6">분석 옵션</h2>
+            <div class="flex items-center mb-6">
+                <div class="w-10 h-10 gradient-icon rounded-xl flex items-center justify-center mr-3">
+                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"></path>
+                    </svg>
+                </div>
+                <h2 class="text-2xl font-bold text-gray-800">분석 옵션</h2>
+            </div>
 
-            <div class="grid md:grid-cols-3 gap-4">
-                <div class="bg-blue-50 rounded-2xl p-6 text-center">
-                    <div class="w-12 h-12 bg-blue-400 rounded-xl flex items-center justify-center mx-auto mb-3">
-                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div class="grid md:grid-cols-3 gap-6">
+                <div class="option-card bg-gradient-to-br from-blue-50 to-blue-100 rounded-2xl p-6 text-center shadow-sm">
+                    <div class="w-14 h-14 bg-gradient-to-br from-blue-400 to-blue-500 rounded-xl flex items-center justify-center mx-auto mb-4 shadow-md">
+                        <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
                         </svg>
                     </div>
-                    <h3 class="font-semibold text-gray-800 mb-2">기본 분석</h3>
+                    <h3 class="font-bold text-gray-800 mb-2 text-lg">기본 분석</h3>
                     <p class="text-gray-600 text-sm">구조, 내용, 문법 검토</p>
                 </div>
 
-                <div class="bg-blue-50 rounded-2xl p-6 text-center">
-                    <div class="w-12 h-12 bg-blue-400 rounded-xl flex items-center justify-center mx-auto mb-3">
-                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div class="option-card bg-gradient-to-br from-purple-50 to-purple-100 rounded-2xl p-6 text-center shadow-sm">
+                    <div class="w-14 h-14 bg-gradient-to-br from-purple-400 to-purple-500 rounded-xl flex items-center justify-center mx-auto mb-4 shadow-md">
+                        <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
                         </svg>
                     </div>
-                    <h3 class="font-semibold text-gray-800 mb-2">심화 분석</h3>
+                    <h3 class="font-bold text-gray-800 mb-2 text-lg">심화 분석</h3>
                     <p class="text-gray-600 text-sm">키워드 최적화, 경쟁력 분석</p>
                 </div>
 
-                <div class="bg-blue-50 rounded-2xl p-6 text-center">
-                    <div class="w-12 h-12 bg-blue-400 rounded-xl flex items-center justify-center mx-auto mb-3">
-                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div class="option-card bg-gradient-to-br from-blue-50 to-purple-50 rounded-2xl p-6 text-center shadow-sm">
+                    <div class="w-14 h-14 gradient-icon rounded-xl flex items-center justify-center mx-auto mb-4 shadow-md">
+                        <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
                         </svg>
                     </div>
-                    <h3 class="font-semibold text-gray-800 mb-2">업계별 분석</h3>
+                    <h3 class="font-bold text-gray-800 mb-2 text-lg">업계별 분석</h3>
                     <p class="text-gray-600 text-sm">업계 특성에 맞춘 맞춤 분석</p>
                 </div>
             </div>
@@ -87,10 +163,17 @@
 
         <!-- 분석 시작 버튼 -->
         <div class="text-center fade-in-delay-2">
-            <button id="startAnalysisButton" class="bg-gradient-to-r from-blue-400 to-purple-400 text-white px-12 py-4 rounded-2xl text-lg font-semibold hover:from-blue-500 hover:to-purple-500 transition-all transform hover:scale-105 shadow-lg">
-                AI 분석 시작하기
-                <svg class="w-5 h-5 inline-block ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <button id="startAnalysisButton" class="bg-gradient-to-r from-blue-400 to-purple-400 text-white px-12 py-4 rounded-2xl text-lg font-semibold hover:from-blue-500 hover:to-purple-500 transition-all transform hover:scale-105 shadow-lg inline-flex items-center space-x-2">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                </svg>
+                <span id="buttonText">AI 분석 시작하기</span>
+                <svg id="buttonIcon" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path>
+                </svg>
+                <svg id="loadingSpinner" class="hidden w-5 h-5 spinner" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                 </svg>
             </button>
         </div>
@@ -105,6 +188,9 @@
         const selectedFileNameSpan = document.getElementById('selectedFileName');
         const changeFileButton = document.getElementById('changeFileButton');
         const startAnalysisButton = document.getElementById('startAnalysisButton');
+        const buttonText = document.getElementById('buttonText');
+        const buttonIcon = document.getElementById('buttonIcon');
+        const loadingSpinner = document.getElementById('loadingSpinner');
 
         documentInput.addEventListener('change', function() {
             if (this.files && this.files.length > 0) {
@@ -136,9 +222,11 @@
             const formData = new FormData();
             formData.append('document', file);
 
-            // TODO: 로딩 스피너 표시
+            // 로딩 상태 표시
             this.disabled = true;
-            this.textContent = '분석 중...';
+            buttonText.textContent = '분석 중...';
+            buttonIcon.classList.add('hidden');
+            loadingSpinner.classList.remove('hidden');
 
             try {
                 const response = await fetch('/document-feedback/upload', {
@@ -154,16 +242,20 @@
                 } else {
                     alert('파일 업로드 및 분석에 실패했습니다.');
                     this.disabled = false;
-                    this.textContent = 'AI 분석 시작하기';
+                    buttonText.textContent = 'AI 분석 시작하기';
+                    buttonIcon.classList.remove('hidden');
+                    loadingSpinner.classList.add('hidden');
                 }
             } catch (error) {
                 console.error('Analysis start error:', error);
                 alert('오류가 발생했습니다. 다시 시도해주세요.');
                 this.disabled = false;
-                this.textContent = 'AI 분석 시작하기';
+                buttonText.textContent = 'AI 분석 시작하기';
+                buttonIcon.classList.remove('hidden');
+                loadingSpinner.classList.add('hidden');
             }
         });
     });
 </script>
-</body>
-</html>
+
+{{>layout/footer}}

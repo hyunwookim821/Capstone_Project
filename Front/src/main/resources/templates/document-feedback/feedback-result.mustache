@@ -4,7 +4,7 @@
 <!-- Main Content -->
 <main class="container mx-auto px-6 py-12">
     <div class="text-center mb-12 fade-in">
-        <div class="w-20 h-20 bg-gradient-to-br from-blue-400 to-purple-400 rounded-3xl flex items-center justify-center mx-auto mb-6">
+        <div class="w-20 h-20 bg-gradient-to-br from-blue-400 to-purple-400 rounded-3xl flex items-center justify-center mx-auto mb-6 hover-scale transition-transform">
             <svg class="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
             </svg>
@@ -13,43 +13,131 @@
             AI 서류 분석 결과
         </h1>
         <p class="text-xl text-gray-600 max-w-3xl mx-auto">
-            AI가 사용자의 서류를 꼼꼼하게 분석하고 피드백을 제공합니다.
+            AI가 사용자의 서류를 분석하고 피드백을 제공합니다.
         </p>
     </div>
 
     <div class="max-w-6xl mx-auto space-y-10">
         <!-- 맞춤법 검사 섹션 -->
-        <div class="bg-white rounded-3xl p-8 shadow-lg fade-in">
-            <h2 class="text-2xl font-bold text-gray-800 mb-6">맞춤법 검사 결과</h2>
-            <div class="grid md:grid-cols-2 gap-6">
-                <div>
-                    <h3 class="text-lg font-semibold text-gray-700 mb-3">원본 내용</h3>
-                    <textarea id="originalText" class="w-full h-64 p-4 border-2 border-gray-200 rounded-lg bg-gray-50" readonly>{{originalText}}</textarea>
+        <div class="bg-white rounded-3xl p-8 shadow-lg fade-in hover-shadow transition-all">
+            <div class="flex items-center space-x-3 mb-6">
+                <div class="w-12 h-12 bg-gradient-to-br from-blue-400 to-purple-400 rounded-xl flex items-center justify-center">
+                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
                 </div>
-                <div>
-                    <h3 class="text-lg font-semibold text-gray-700 mb-3">수정된 내용</h3>
-                    <textarea id="correctedText" class="w-full h-64 p-4 border-2 border-blue-300 rounded-lg bg-blue-50" readonly>{{correctedText}}</textarea>
+                <h2 class="text-2xl font-bold text-gray-800">맞춤법 검사 결과</h2>
+            </div>
+
+            <div class="grid md:grid-cols-2 gap-6">
+                <div class="group">
+                    <div class="flex items-center space-x-2 mb-3">
+                        <div class="w-8 h-8 bg-gray-200 rounded-lg flex items-center justify-center">
+                            <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path>
+                            </svg>
+                        </div>
+                        <h3 class="text-lg font-semibold text-gray-700">원본 내용</h3>
+                    </div>
+                    <textarea id="originalText" class="w-full h-64 p-4 border-2 border-gray-200 rounded-2xl bg-gray-50 text-gray-800 focus:border-blue-300 focus:outline-none transition-colors resize-none" readonly>{{originalText}}</textarea>
+                </div>
+                <div class="group">
+                    <div class="flex items-center space-x-2 mb-3">
+                        <div class="w-8 h-8 bg-gradient-to-br from-blue-400 to-purple-400 rounded-lg flex items-center justify-center">
+                            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                            </svg>
+                        </div>
+                        <h3 class="text-lg font-semibold text-gray-700">수정된 내용</h3>
+                    </div>
+                    <textarea id="correctedText" class="w-full h-64 p-4 border-2 border-blue-300 rounded-2xl bg-gradient-to-br from-blue-50 to-purple-50 text-gray-800 focus:border-blue-400 focus:outline-none transition-colors resize-none" readonly>{{correctedText}}</textarea>
+                </div>
+            </div>
+
+            <!-- 차이점 표시 -->
+            <div class="mt-6 p-4 bg-gradient-to-r from-blue-50 to-purple-50 rounded-2xl border-l-4 border-blue-400">
+                <div class="flex items-center space-x-2">
+                    <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    <p class="text-sm text-gray-700">
+                        <span class="font-semibold">수정 사항:</span> AI가 맞춤법과 문법을 검토하여 개선했습니다.
+                    </p>
                 </div>
             </div>
         </div>
 
         <!-- AI 종합 피드백 섹션 -->
-        <div class="bg-white rounded-3xl p-8 shadow-lg fade-in-delay">
-            <h2 class="text-2xl font-bold text-gray-800 mb-6">AI 종합 피드백</h2>
-            <div id="feedback-container" class="prose lg:prose-xl max-w-none p-6 bg-gray-50 rounded-2xl min-h-[150px]">
+        <div class="bg-white rounded-3xl p-8 shadow-lg fade-in-delay hover-shadow transition-all">
+            <div class="flex items-center space-x-3 mb-6">
+                <div class="w-12 h-12 bg-gradient-to-br from-blue-400 to-purple-400 rounded-xl flex items-center justify-center">
+                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
+                    </svg>
+                </div>
+                <h2 class="text-2xl font-bold text-gray-800">AI 종합 피드백</h2>
+            </div>
+
+            <div id="feedback-container" class="p-8 bg-gradient-to-br from-gray-50 to-blue-50 rounded-2xl min-h-[200px]">
                 <!-- JS에 의해 내용이 채워집니다 -->
             </div>
             <div id="feedback-data" class="hidden">{{feedback}}</div>
+
+            <!-- 예상 면접 질문 버튼 -->
+            <div id="next-step-container" class="hidden text-center mt-8">
+                <a href="/document-feedback/interview-questions" class="group inline-flex items-center space-x-3 bg-gradient-to-r from-green-400 to-emerald-500 text-white px-10 py-4 rounded-2xl text-lg font-semibold hover:from-green-500 hover:to-emerald-600 transition-all transform hover:scale-105 shadow-lg">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    <span>AI 예상 면접 질문 생성하기</span>
+                    <svg class="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path>
+                    </svg>
+                </a>
+            </div>
         </div>
 
-        <!-- 다음 단계 버튼 (초기에는 숨김) -->
-        <div id="next-step-container" class="text-center mt-12 hidden">
-            <a href="/document-feedback/interview-questions" class="bg-gradient-to-r from-blue-500 to-purple-500 text-white px-12 py-4 rounded-2xl text-lg font-semibold hover:from-blue-600 hover:to-purple-600 transition-all transform hover:scale-105 shadow-lg">
-                AI 예상 면접 질문 생성하기
-            </a>
+        <!-- 추가 안내 카드 -->
+        <div class="bg-gradient-to-r from-blue-50 to-purple-50 rounded-3xl p-8 border-2 border-blue-200 fade-in-delay-2">
+            <div class="flex items-start space-x-4">
+                <div class="w-12 h-12 bg-blue-400 rounded-xl flex items-center justify-center flex-shrink-0">
+                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                </div>
+                <div>
+                    <h3 class="text-lg font-bold text-gray-800 mb-2">다음 단계 안내</h3>
+                    <p class="text-gray-700 leading-relaxed">
+                        AI 피드백을 확인한 후, 예상 면접 질문을 받아보세요.
+                        서류 내용을 기반으로 맞춤형 면접 질문이 생성되며, 이를 통해 실전 면접을 효과적으로 준비할 수 있습니다.
+                    </p>
+                </div>
+            </div>
         </div>
     </div>
 </main>
+
+<style>
+    .fade-in {
+        animation: fadeIn 0.8s ease-out;
+    }
+    .fade-in-delay {
+        animation: fadeIn 0.8s ease-out 0.2s both;
+    }
+    .fade-in-delay-2 {
+        animation: fadeIn 0.8s ease-out 0.4s both;
+    }
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    .hover-scale:hover {
+        transform: scale(1.05);
+    }
+    .hover-shadow:hover {
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    }
+</style>
 
 <!-- marked.js CDN -->
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
@@ -68,22 +156,50 @@ document.addEventListener('DOMContentLoaded', () => {
     } else {
         // 피드백 내용이 없으면 버튼 생성
         const buttonPlaceholder = document.createElement('div');
-        buttonPlaceholder.className = 'text-center';
+        buttonPlaceholder.className = 'flex items-center justify-center';
         buttonPlaceholder.id = 'feedback-placeholder';
         buttonPlaceholder.innerHTML = `
-            <p class="text-gray-500 mb-4">아래 버튼을 눌러 AI 피드백을 받아보세요.</p>
-            <button id="get-feedback-btn" class="bg-blue-500 text-white px-6 py-2 rounded-lg font-semibold hover:bg-blue-600 transition-colors">
-                <span class="spinner mr-2" style="display: none;"></span>
-                AI 피드백 받기
-            </button>
+            <div class="text-center">
+                <p class="text-gray-500 mb-6">아래 버튼을 눌러 AI 피드백을 받아보세요.</p>
+                <button id="get-feedback-btn" class="group bg-gradient-to-r from-blue-400 to-purple-400 text-white px-10 py-4 rounded-2xl text-lg font-semibold hover:from-blue-500 hover:to-purple-500 transition-all transform hover:scale-105 shadow-lg flex items-center space-x-3 mx-auto">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                    </svg>
+                    <span id="btn-text">수정된 내용으로 AI 피드백 받기</span>
+                    <svg class="w-5 h-5 group-hover:translate-x-1 transition-transform" id="btn-arrow" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path>
+                    </svg>
+                </button>
+            </div>
         `;
         feedbackContainer.appendChild(buttonPlaceholder);
 
         const getFeedbackBtn = document.getElementById('get-feedback-btn');
+        const btnText = document.getElementById('btn-text');
+        const btnArrow = document.getElementById('btn-arrow');
+
         getFeedbackBtn.addEventListener('click', () => {
-            const spinner = getFeedbackBtn.querySelector('.spinner');
-            spinner.style.display = 'inline-block';
+            // 로딩 상태로 변경
             getFeedbackBtn.disabled = true;
+            btnText.textContent = 'AI가 피드백을 생성하고 있습니다...';
+            btnArrow.classList.add('hidden');
+
+            // 로딩 스피너 표시
+            const loadingSpinner = document.createElement('div');
+            loadingSpinner.className = 'flex flex-col items-center space-y-4';
+            loadingSpinner.innerHTML = `
+                <div class="relative">
+                    <div class="w-16 h-16 border-4 border-blue-200 rounded-full"></div>
+                    <div class="w-16 h-16 border-4 border-blue-500 rounded-full border-t-transparent animate-spin absolute top-0"></div>
+                </div>
+                <div class="flex space-x-1">
+                    <div class="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style="animation-delay: 0s"></div>
+                    <div class="w-2 h-2 bg-purple-400 rounded-full animate-bounce" style="animation-delay: 0.1s"></div>
+                    <div class="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style="animation-delay: 0.2s"></div>
+                </div>
+            `;
+            buttonPlaceholder.innerHTML = '';
+            buttonPlaceholder.appendChild(loadingSpinner);
 
             fetch(`/document-feedback/feedback/${resumeId}`, {
                 method: 'POST',
@@ -106,26 +222,22 @@ document.addEventListener('DOMContentLoaded', () => {
             .catch(error => {
                 console.error('Error fetching AI feedback:', error);
                 alert('AI 피드백을 가져오는 중 오류가 발생했습니다. 개발자 콘솔(F12)을 확인해주세요.');
-                spinner.style.display = 'none';
-                getFeedbackBtn.disabled = false;
+                // 에러 시 버튼 복원
+                buttonPlaceholder.innerHTML = `
+                    <div class="text-center">
+                        <p class="text-red-500 mb-6">오류가 발생했습니다. 다시 시도해주세요.</p>
+                        <button id="get-feedback-btn" class="group bg-gradient-to-r from-blue-400 to-purple-400 text-white px-10 py-4 rounded-2xl text-lg font-semibold hover:from-blue-500 hover:to-purple-500 transition-all transform hover:scale-105 shadow-lg flex items-center space-x-3 mx-auto">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                            </svg>
+                            <span>다시 시도</span>
+                        </button>
+                    </div>
+                `;
             });
         });
     }
 });
 </script>
-<style>
-    .spinner {
-        display: inline-block;
-        width: 1rem;
-        height: 1rem;
-        border: 2px solid rgba(255,255,255,0.3);
-        border-radius: 50%;
-        border-top-color: #fff;
-        animation: spin 1s ease-in-out infinite;
-    }
-    @keyframes spin {
-        to { transform: rotate(360deg); }
-    }
-</style>
 
 {{>layout/footer}}

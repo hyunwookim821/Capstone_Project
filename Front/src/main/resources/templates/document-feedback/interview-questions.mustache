@@ -4,7 +4,7 @@
 <!-- Main Content -->
 <main class="container mx-auto px-6 py-12">
     <div class="text-center mb-12 fade-in">
-        <div class="w-20 h-20 bg-gradient-to-br from-green-400 to-blue-500 rounded-3xl flex items-center justify-center mx-auto mb-6">
+        <div class="w-20 h-20 bg-gradient-to-br from-blue-400 to-purple-400 rounded-3xl flex items-center justify-center mx-auto mb-6 hover-scale transition-transform">
             <svg class="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
             </svg>
@@ -18,35 +18,87 @@
     </div>
 
     <div class="max-w-4xl mx-auto">
-        <div class="bg-white rounded-3xl p-8 shadow-lg fade-in">
+        <div class="bg-white rounded-3xl p-8 md:p-12 shadow-xl fade-in hover-shadow transition-shadow">
             <!-- 설명 추가 -->
-            <div class="bg-gray-100 rounded-xl p-4 mb-8 text-sm text-gray-700">
-                <p><strong class="font-semibold">[공통]</strong>: 직무/인성과 관련된 일반적인 질문입니다.</p>
-                <p><strong class="font-semibold">🌶️</strong>: 지원자의 역량과 경험을 깊이 파고드는 압박 질문입니다.</p>
+            <div class="bg-gradient-to-r from-blue-50 to-purple-50 rounded-2xl p-6 mb-10 border-l-4 border-blue-400">
+                <div class="flex items-start space-x-3">
+                    <div class="flex-shrink-0 w-10 h-10 bg-gradient-to-br from-blue-400 to-purple-400 rounded-xl flex items-center justify-center">
+                        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                    </div>
+                    <div class="flex-1">
+                        <h3 class="font-bold text-gray-800 mb-2">질문 유형 안내</h3>
+                        <p class="text-sm text-gray-700 mb-1">
+                            <span class="inline-flex items-center justify-center w-7 h-7 bg-blue-100 text-blue-600 rounded-lg font-bold text-xs mr-2">일반</span>
+                            직무/인성과 관련된 일반적인 질문입니다.
+                        </p>
+                        <p class="text-sm text-gray-700">
+                            <span class="inline-flex items-center justify-center w-7 h-7 bg-red-100 rounded-lg mr-2">🌶️</span>
+                            지원자의 역량과 경험을 깊이 파고드는 압박 질문입니다.
+                        </p>
+                    </div>
+                </div>
             </div>
 
             <ul class="space-y-6">
                 {{#questions}}
-                <li class="flex items-start">
-                    <div class="flex-shrink-0 w-8 h-8 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center font-bold text-lg mr-4">Q</div>
-                    <p class="text-gray-800 text-lg leading-relaxed">{{questionText}}</p>
-                </li>
+                    <li class="group">
+                        <div class="flex items-start p-6 bg-gray-50 rounded-2xl hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 transition-all">
+                            <div class="flex-shrink-0 w-12 h-12 bg-gradient-to-br from-blue-400 to-purple-400 text-white rounded-2xl flex items-center justify-center font-bold text-lg mr-4 shadow-md group-hover:scale-110 transition-transform">
+                                Q
+                            </div>
+                            <p class="text-gray-800 text-lg leading-relaxed pt-2">{{questionText}}</p>
+                        </div>
+                    </li>
                 {{/questions}}
             </ul>
             {{^questions}}
-            <div class="text-center py-12">
-                <p class="text-gray-500 text-lg">생성된 면접 질문이 없습니다.</p>
-            </div>
+                <div class="text-center py-16">
+                    <div class="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                        <svg class="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                    </div>
+                    <p class="text-gray-500 text-lg">생성된 면접 질문이 없습니다.</p>
+                    <p class="text-gray-400 text-sm mt-2">서류를 업로드하고 AI가 분석하도록 해주세요.</p>
+                </div>
             {{/questions}}
 
-            <!-- 모의 면접 진행 버튼 수정 -->
-            <div class="text-center mt-12">
-                <a href="/interview/start?resumeId={{resumeId}}" class="bg-gradient-to-r from-blue-500 to-purple-500 text-white px-12 py-4 rounded-2xl text-lg font-semibold hover:from-blue-600 hover:to-purple-600 transition-all transform hover:scale-105 shadow-lg">
-                    AI 모의 면접 진행하기
+            <!-- 모의 면접 진행 버튼 -->
+            <div class="text-center mt-12 pt-8 border-t-2 border-gray-100">
+                <a href="/interview/start?resumeId={{resumeId}}" class="inline-flex items-center space-x-3 bg-gradient-to-r from-blue-400 to-purple-400 text-white px-12 py-5 rounded-2xl text-lg font-semibold hover:from-blue-500 hover:to-purple-500 transition-all transform hover:scale-105 shadow-lg hover-shadow">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    <span>AI 모의 면접 진행하기</span>
+                    <svg class="w-5 h-5 hover-translate transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path>
+                    </svg>
                 </a>
             </div>
         </div>
     </div>
 </main>
+
+<style>
+    .fade-in {
+        animation: fadeIn 0.8s ease-out;
+    }
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    .hover-scale:hover {
+        transform: scale(1.1);
+    }
+    .hover-shadow:hover {
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    }
+    .hover-translate:hover {
+        transform: translateX(4px);
+    }
+</style>
 
 {{>layout/footer}}

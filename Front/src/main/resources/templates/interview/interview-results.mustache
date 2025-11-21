@@ -1,36 +1,186 @@
 {{>layout/header}}
 <div class="h-20 md:h-24"></div>
 
+<style>
+    .markdown-content {
+        line-height: 1.8;
+    }
+    .markdown-content h1 {
+        font-size: 2em;
+        font-weight: bold;
+        margin-top: 1.5em;
+        margin-bottom: 0.5em;
+        color: #1f2937;
+    }
+    .markdown-content h2 {
+        font-size: 1.5em;
+        font-weight: bold;
+        margin-top: 1.5em;
+        margin-bottom: 0.5em;
+        color: #374151;
+    }
+    .markdown-content h3 {
+        font-size: 1.25em;
+        font-weight: bold;
+        margin-top: 1.2em;
+        margin-bottom: 0.5em;
+        color: #4b5563;
+    }
+    .markdown-content p {
+        margin-bottom: 1em;
+        color: #4b5563;
+    }
+    .markdown-content ul, .markdown-content ol {
+        margin-bottom: 1em;
+        padding-left: 2em;
+        color: #4b5563;
+    }
+    .markdown-content li {
+        margin-bottom: 0.5em;
+    }
+    .markdown-content strong {
+        font-weight: 600;
+        color: #1f2937;
+    }
+    .markdown-content code {
+        background-color: #f3f4f6;
+        padding: 0.2em 0.4em;
+        border-radius: 0.25rem;
+        font-size: 0.9em;
+        color: #e11d48;
+    }
+    .markdown-content pre {
+        background-color: #f9fafb;
+        padding: 1em;
+        border-radius: 0.5rem;
+        overflow-x: auto;
+        margin-bottom: 1em;
+    }
+    .markdown-content blockquote {
+        border-left: 4px solid #60a5fa;
+        padding-left: 1em;
+        margin: 1em 0;
+        color: #6b7280;
+        font-style: italic;
+    }
+    .markdown-content table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 1em;
+    }
+    .markdown-content th, .markdown-content td {
+        border: 1px solid #e5e7eb;
+        padding: 0.75em;
+        text-align: left;
+    }
+    .markdown-content th {
+        background-color: #f3f4f6;
+        font-weight: 600;
+    }
+</style>
+
+<!-- Main Content -->
 <main class="container mx-auto px-6 py-12">
+    <!-- Title Section -->
     <div class="text-center mb-12">
-        <h1 class="text-4xl md:text-5xl font-bold text-gray-800 mb-6">AI 면접 분석 리포트</h1>
-        <p class="text-xl text-gray-600 max-w-3xl mx-auto">AI가 면접 전반을 분석하여 생성한 종합 리포트입니다.</p>
+        <div class="inline-flex items-center justify-center w-20 h-20 gradient-icon rounded-2xl mb-6">
+            <svg class="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+            </svg>
+        </div>
+        <h1 class="text-4xl md:text-5xl font-bold text-gray-800 mb-4">
+            AI 면접 분석 리포트
+        </h1>
+        <p class="text-xl text-gray-600 max-w-2xl mx-auto">
+            AI가 면접 전반을 분석하여 생성한 종합 리포트입니다
+        </p>
     </div>
 
-    <div class="max-w-4xl mx-auto bg-white rounded-3xl p-8 shadow-lg">
-        <!-- Markdown으로 된 피드백 텍스트를 HTML로 렌더링할 컨테이너 -->
-        <div id="feedback-container" class="prose lg:prose-xl max-w-none">
-            <!-- JavaScript에 의해 채워질 내용 -->
+    <!-- Report Container -->
+    <div class="max-w-4xl mx-auto">
+        <div class="bg-white rounded-2xl shadow-lg p-8 md:p-12">
+            <!-- Hidden feedback data -->
+            <div id="feedbackData" style="display: none;">{{analysis.feedbackText}}</div>
+
+            <!-- Rendered markdown content -->
+            <div id="markdownContent" class="markdown-content"></div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="mt-8 flex flex-col md:flex-row gap-4 justify-center">
+            <button onclick="window.print()" class="flex items-center justify-center space-x-2 bg-white text-blue-600 border-2 border-blue-600 px-8 py-3 rounded-full font-semibold hover:bg-blue-50 transition-all">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path>
+                </svg>
+                <span>인쇄하기</span>
+            </button>
+            <a href="/mypage" class="flex items-center justify-center space-x-2 gradient-button text-white px-8 py-3 rounded-full font-semibold hover-shadow transition-all">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
+                </svg>
+                <span>마이페이지로</span>
+            </a>
+            <a href="/interview-practice" class="flex items-center justify-center space-x-2 bg-purple-500 text-white px-8 py-3 rounded-full font-semibold hover:bg-purple-600 transition-all">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                </svg>
+                <span>다시 연습하기</span>
+            </a>
         </div>
     </div>
-
-    <!-- 숨겨진 데이터 블록 -->
-    <div id="feedback-data" class="hidden">{{analysis.feedbackText}}</div>
 </main>
+
+<!-- Footer -->
+<footer class="bg-gray-800 py-12 mt-20">
+    <div class="container mx-auto px-6">
+        <div class="flex flex-col md:flex-row justify-between items-center">
+            <div class="flex items-center space-x-3 mb-4 md:mb-0">
+                <div class="w-8 h-8 gradient-icon rounded-lg flex items-center justify-center">
+                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
+                    </svg>
+                </div>
+                <span class="text-xl font-bold text-white">면접 시뮬레이터</span>
+            </div>
+            <div class="text-gray-400 text-sm">
+                © 2025 면접 시뮬레이터. All rights reserved.
+            </div>
+        </div>
+    </div>
+</footer>
 
 <!-- marked.js CDN -->
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <script>
-    document.addEventListener('DOMContentLoaded', () => {
-        const feedbackDataEl = document.getElementById('feedback-data');
-        const feedbackContainer = document.getElementById('feedback-container');
+    // Render markdown content on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        const feedbackData = document.getElementById('feedbackData').textContent;
+        const contentDiv = document.getElementById('markdownContent');
 
-        if (feedbackDataEl && feedbackContainer) {
-            const markdownText = feedbackDataEl.textContent;
-            // marked.js를 사용하여 Markdown을 HTML로 변환하고 컨테이너에 삽입
-            feedbackContainer.innerHTML = marked.parse(markdownText);
+        if (feedbackData && feedbackData.trim() !== '') {
+            // Parse markdown and render
+            contentDiv.innerHTML = marked.parse(feedbackData);
+        } else {
+            // Show placeholder if no data
+            contentDiv.innerHTML = `
+                <div class="text-center py-12">
+                    <svg class="w-16 h-16 mx-auto text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                    </svg>
+                    <h3 class="text-xl font-semibold text-gray-700 mb-2">분석 리포트가 없습니다</h3>
+                    <p class="text-gray-500 mb-6">면접 연습을 완료하면 AI가 생성한 분석 리포트를 확인할 수 있습니다</p>
+                    <a href="/interview-practice" class="inline-flex items-center space-x-2 gradient-button text-white px-6 py-3 rounded-full font-semibold hover-shadow transition-all">
+                        <span>면접 연습 시작하기</span>
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path>
+                        </svg>
+                    </a>
+                </div>
+            `;
         }
     });
 </script>
+</body>
+</html>
 
 {{>layout/footer}}
