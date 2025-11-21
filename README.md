@@ -15,8 +15,13 @@ AI를 활용하여 실제와 같은 모의 면접을 연습하고, 음성 및 �
     -   **역할:**
         -   모든 비즈니스 로직 처리 (사용자 인증, 이력서/면접 관리 등)
         -   데이터베이스(PostgreSQL)와의 모든 상호작용 담당
-        -   외부 AI 서비스 연동 (Google Gemini, Anthropic Claude, Whisper 등)
-        -   음성 및 영상 데이터 분석 로직 수행
+        -   외부 AI 서비스 연동
+            -   **Google Gemini**: 맞춤형 면접 질문 생성
+            -   **Anthropic Claude**: 종합 면접 분석 리포트 생성
+            -   **Google Gemini TTS**: 자연스러운 면접관 음성 합성
+            -   **OpenAI Whisper**: 면접 답변 음성-텍스트 변환 및 분석
+        -   음성 분석: 말하기 속도(어절/분), 침묵 비율 계산
+        -   영상 분석: MediaPipe 기반 시선/표정/자세 안정성 측정
 
 -   **프론트엔드 BFF 서버 (Frontend BFF) - `Front`**
     -   **프레임워크:** Spring Boot (Java)
@@ -91,8 +96,8 @@ cd <프로젝트_디렉토리>
     CLAUDE_API_KEY=your_claude_api_key_here
 
     # === AI MODELS ===
-    GEMINI_MODEL=gemini-2.5-flash    // 모델 변경 가능
-    CLAUDE_MODEL=claude-haiku-4-5-20251001    // 모델 변경 가능
+    GEMINI_MODEL=gemini-2.5-flash    // 질문 생성용 (변경 가능)
+    CLAUDE_MODEL=claude-haiku-4-5-20251001   // 면접 분석용 (변경 가능)
 
     # === DATABASE ===
     POSTGRES_SERVER=localhost
@@ -103,11 +108,15 @@ cd <프로젝트_디렉토리>
 
     DATABASE_URL=postgresql://jobprep:jobprep_password@localhost:5432/jobprep_db
 
-    # === TTS ===
+    # === TTS (Gemini TTS - 자연스러운 음성 생성) ===
     EMBEDDING_MODEL=jhgan/ko-sroberta-multitask
-    TTS_MODEL_NAME=gemini-2.5-flash-tts     // 모델 변경 가능
-    TTS_VOICE_NAME=ko-KR-Neural2-C
+    TTS_MODEL_NAME=gemini-2.5-flash-tts     // gemini-2.5-pro-tts로 변경 가능 (고품질)
+    TTS_VOICE_NAME=Charon    // Gemini TTS 음성 (Kore, Aoede, Puck 등으로 변경 가능)
+    TTS_STYLE_PROMPT=당신은 경험이 풍부한 전문 면접관입니다. 친절하면서도 전문적인 톤으로, 명확하고 또렷하게 질문을 전달합니다. 아주 살짝 빠른 속도로 말하며, 지원자가 편안하게 답변할 수 있도록 격려적인 분위기를 조성합니다.
     GOOGLE_APPLICATION_CREDENTIALS=./your-service-account-key.json
+
+    # === JWT 토큰 설정 ===
+    ACCESS_TOKEN_EXPIRE_MINUTES=120    // 면접 시간을 고려하여 2시간으로 설정
     ```
 
 3.  **의존성 설치:**
