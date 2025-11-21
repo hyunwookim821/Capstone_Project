@@ -8,6 +8,12 @@ from app.schemas.interview import InterviewCreate, QuestionCreate, AnswerCreate
 def get_interview(db: Session, interview_id: int) -> Interview | None:
     return db.query(Interview).filter(Interview.interview_id == interview_id).first()
 
+def get_interviews_by_user(db: Session, user_id: int) -> List[Interview]:
+    """
+    Get all interviews for a specific user, ordered by creation date descending.
+    """
+    return db.query(Interview).filter(Interview.user_id == user_id).order_by(Interview.created_at.desc()).all()
+
 def create_interview(db: Session, *, obj_in: InterviewCreate) -> Interview:
     db_obj = Interview(
         user_id=obj_in.user_id,

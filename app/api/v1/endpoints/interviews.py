@@ -126,6 +126,57 @@ async def cleanup_audio_files_after_delay(interview_id: int, delay_minutes: int 
     finally:
         db.close()
 
+@router.get("/", response_model=List[Dict[str, Any]])
+def get_user_interviews(
+    *,
+    db: Session = Depends(deps.get_db),
+    current_user: models.User = Depends(deps.get_current_user)
+):
+    """
+    Get all interviews for the current user with resume information and Q&A data.
+    Returns a list of interviews with nested questions and answers.
+    """
+    interviews = crud.interview.get_interviews_by_user(db, user_id=current_user.user_id)
+
+    result = []
+    for interview in interviews:
+        # Get resume information
+        resume = crud.resume.get(db, resume_id=interview.resume_id)
+
+        # Get questions and answers
+        questions = crud.interview.get_questions_by_interview(db, interview_id=interview.interview_id)
+        qa_list = []
+        has_any_answer = False  # 최소한 하나의 답변이 있는지 체크
+
+        for q in questions:
+            answer_text = q.answers[0].answer_text if q.answers else ""
+            if answer_text:  # 답변이 있으면 플래그 설정
+                has_any_answer = True
+            qa_list.append({
+                "question_text": q.question_text,
+                "answer_text": answer_text
+            })
+
+        # 답변이 하나도 없는 면접은 이력에 표시하지 않음
+        if not has_any_answer:
+            continue
+
+        # Get analysis if exists
+        analysis = crud.analysis.get_analysis_by_interview(db, interview_id=interview.interview_id)
+
+        result.append({
+            "interview_id": interview.interview_id,
+            "resume_title": resume.title if resume else "제목 없음",
+            "created_at": interview.created_at.isoformat() if interview.created_at else None,
+            "qa_list": qa_list,
+            "has_feedback": analysis is not None
+        })
+
+    # Sort by created_at descending (newest first)
+    result.sort(key=lambda x: x["created_at"] if x["created_at"] else "", reverse=True)
+
+    return result
+
 @router.post("/", response_model=InterviewSession)
 def create_interview_session(
     *,
@@ -136,7 +187,7 @@ def create_interview_session(
     """
     Creates an interview session.
     It uses questions already associated with the resume.
-    If no questions exist, it generates them on the fly and saves them to the resume.
+    If no questions exist, it generates them on the fly and saves them to the fly and saves them to the resume.
     """
     resume = crud.resume.get(db, resume_id=resume_id)
     if not resume or resume.user_id != current_user.user_id:
@@ -238,7 +289,20 @@ async def get_interview_results(
     # If a full analysis already exists, return it to prevent re-generation.
     analysis = crud.analysis.get_analysis_by_interview(db, interview_id=interview_id)
     if analysis:
-        return analysis
+        # Add resume_id for re-interview functionality
+        analysis_dict = {
+            "analysis_id": analysis.analysis_id,
+            "interview_id": analysis.interview_id,
+            "resume_id": interview.resume_id,
+            "feedback_text": analysis.feedback_text,
+            "speech_rate": analysis.speech_rate,
+            "silence_ratio": analysis.silence_ratio,
+            "gaze_stability": analysis.gaze_stability,
+            "expression_stability": analysis.expression_stability,
+            "posture_stability": analysis.posture_stability,
+            "created_at": analysis.created_at
+        }
+        return analysis_dict
 
     # --- Gather All Data ---
     resume = crud.resume.get(db, resume_id=interview.resume_id)
@@ -369,7 +433,20 @@ async def get_interview_results(
 
         try:
             new_analysis = crud.analysis.create_analysis(db=db, obj_in=analysis_create)
-            return new_analysis
+            # Add resume_id for re-interview functionality
+            new_analysis_dict = {
+                "analysis_id": new_analysis.analysis_id,
+                "interview_id": new_analysis.interview_id,
+                "resume_id": interview.resume_id,
+                "feedback_text": new_analysis.feedback_text,
+                "speech_rate": new_analysis.speech_rate,
+                "silence_ratio": new_analysis.silence_ratio,
+                "gaze_stability": new_analysis.gaze_stability,
+                "expression_stability": new_analysis.expression_stability,
+                "posture_stability": new_analysis.posture_stability,
+                "created_at": new_analysis.created_at
+            }
+            return new_analysis_dict
         except IntegrityError:
             # Another request already created the analysis (race condition)
             # Rollback and fetch the existing analysis

@@ -19,6 +19,7 @@ class AnalysisUpdate(AnalysisBase):
 class Analysis(AnalysisBase):
     analysis_id: int
     interview_id: int
+    resume_id: Optional[int] = None  # 재면접을 위한 resume_id 추가
     created_at: datetime
 
     class Config:

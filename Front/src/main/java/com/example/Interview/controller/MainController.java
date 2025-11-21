@@ -100,10 +100,29 @@ public class MainController {
 
     @GetMapping("/start")
     public String start(HttpSession session) {
-        if (session.getAttribute("token") != null) {
+        String token = (String) session.getAttribute("token");
+        System.out.println("[/start] Token in session: " + (token != null ? "exists" : "null"));
+
+        if (token != null) {
+            System.out.println("[/start] Redirecting to /selection");
             return "redirect:/selection";
         } else {
+            System.out.println("[/start] Redirecting to /auth/login");
             return "redirect:/auth/login";
+        }
+    }
+
+    @GetMapping("/free-start")
+    public String freeStart(HttpSession session) {
+        String token = (String) session.getAttribute("token");
+        System.out.println("[/free-start] Token in session: " + (token != null ? "exists" : "null"));
+
+        if (token != null) {
+            System.out.println("[/free-start] Redirecting to /selection");
+            return "redirect:/selection";
+        } else {
+            System.out.println("[/free-start] Redirecting to /auth/signup");
+            return "redirect:/auth/signup";
         }
     }
 }

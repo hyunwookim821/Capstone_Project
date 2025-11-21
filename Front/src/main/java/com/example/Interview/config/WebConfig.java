@@ -13,7 +13,7 @@ public class WebConfig implements WebMvcConfigurer {
                 .order(1) // 인터셉터 체인 순서
                 .addPathPatterns("/**") // 모든 경로에 인터셉터 적용
                 .excludePathPatterns(
-                        "/", "/auth/login", "/auth/signup", "/api/auth/login", "/api/auth/signup",
+                        "/", "/start", "/free-start", "/auth/login", "/auth/signup", "/api/auth/login", "/api/auth/signup",
                         "/css/**", "/js/**", "/*.ico", "/error"
                 ); // 제외할 경로 지정
     }

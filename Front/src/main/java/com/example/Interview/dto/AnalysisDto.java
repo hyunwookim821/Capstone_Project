@@ -11,6 +11,9 @@ public class AnalysisDto {
     @JsonProperty("interview_id")
     private int interviewId;
 
+    @JsonProperty("resume_id")
+    private Integer resumeId;  // 재면접을 위한 resume_id 추가
+
     @JsonProperty("feedback_text")
     private String feedbackText;
 
@@ -47,6 +50,14 @@ public class AnalysisDto {
 
     public void setInterviewId(int interviewId) {
         this.interviewId = interviewId;
+    }
+
+    public Integer getResumeId() {
+        return resumeId;
+    }
+
+    public void setResumeId(Integer resumeId) {
+        this.resumeId = resumeId;
     }
 
     public String getFeedbackText() {

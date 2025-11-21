@@ -2,7 +2,9 @@ package com.example.Interview.service;
 
 import com.example.Interview.dto.InterviewSessionDto;
 import com.example.Interview.dto.AnalysisDto; // AnalysisDto 임포트 추가
+import com.example.Interview.dto.InterviewHistoryDto; // InterviewHistoryDto 임포트 추가
 import lombok.RequiredArgsConstructor;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
@@ -47,5 +49,13 @@ public class InterviewService {
                 .bodyValue(requestBody)
                 .retrieve()
                 .bodyToMono(Void.class);
+    }
+
+    public Mono<List<InterviewHistoryDto>> getUserInterviews(String token) {
+        return webClient.get()
+                .uri("/interviews/")
+                .headers(headers -> headers.setBearerAuth(token))
+                .retrieve()
+                .bodyToMono(new ParameterizedTypeReference<List<InterviewHistoryDto>>() {});
     }
 }
