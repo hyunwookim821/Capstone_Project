@@ -47,9 +47,21 @@ def create_answer(db: Session, *, obj_in: AnswerCreate) -> Answer:
     db_obj = Answer(
         question_id=obj_in.question_id,
         answer_text=obj_in.answer_text,
-        audio_path=obj_in.audio_path
+        audio_path=obj_in.audio_path,
+        whisper_result=obj_in.whisper_result  # Whisper 결과 저장
     )
     db.add(db_obj)
     db.commit()
     db.refresh(db_obj)
     return db_obj
+
+def get_answers_by_interview(db: Session, interview_id: int) -> List[Answer]:
+    """
+    특정 면접의 모든 답변을 조회합니다.
+    """
+    return (
+        db.query(Answer)
+        .join(Question, Answer.question_id == Question.question_id)
+        .filter(Question.interview_id == interview_id)
+        .all()
+    )

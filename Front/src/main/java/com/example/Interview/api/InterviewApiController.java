@@ -40,10 +40,16 @@ public class InterviewApiController {
 
     @PostMapping("/{interviewId}/video-analysis")
     public Mono<ResponseEntity<Void>> sendVideoAnalysisData(@PathVariable Long interviewId,
-                                                               @RequestBody List<Map<String, Object>> landmarkData,
+                                                               @RequestBody Map<String, Object> requestBody,
                                                                @RequestHeader("Authorization") String authHeader) {
+        System.out.println("[Spring Boot] Received video-analysis request for interview " + interviewId);
         String token = authHeader.replace("Bearer ", "");
+        @SuppressWarnings("unchecked")
+        List<Map<String, Object>> landmarkData = (List<Map<String, Object>>) requestBody.get("landmarks");
+        System.out.println("[Spring Boot] Extracted " + (landmarkData != null ? landmarkData.size() : 0) + " landmark frames");
         return interviewService.sendVideoAnalysisData(interviewId, landmarkData, token)
+                .doOnSuccess(v -> System.out.println("[Spring Boot] Successfully forwarded video analysis to FastAPI"))
+                .doOnError(e -> System.err.println("[Spring Boot] Error forwarding video analysis: " + e.getMessage()))
                 .then(Mono.just(ResponseEntity.ok().<Void>build()))
                 .defaultIfEmpty(ResponseEntity.badRequest().build());
     }

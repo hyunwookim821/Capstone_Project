@@ -38,6 +38,7 @@ public class InterviewService {
     }
 
     public Mono<Void> sendVideoAnalysisData(Long interviewId, List<Map<String, Object>> landmarkData, String token) {
+        // Wrap landmarks in the format expected by FastAPI backend
         Map<String, Object> requestBody = Map.of("landmarks", landmarkData);
 
         return webClient.post()

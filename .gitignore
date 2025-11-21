@@ -96,6 +96,7 @@ venv.bak/
 audio_files/
 *.pdf
 CLAUDE.md
+GEMINI.md
 
 # EXE
 ffmpeg.exe

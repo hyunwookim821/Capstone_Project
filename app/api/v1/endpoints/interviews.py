@@ -5,6 +5,8 @@ import base64
 import uuid
 import re
 import io
+import json
+import asyncio
 import google.generativeai as genai
 import google.cloud.texttospeech as tts
 import whisper
@@ -23,6 +25,7 @@ from app.schemas.analysis import Analysis, AnalysisCreate
 from app.schemas.video_analysis import VideoAnalysisCreate
 from app.utils.audio_analysis import analyze_whisper_result
 from app.utils.video_analysis import analyze_video_landmarks
+from app.prompts import get_question_generation_prompt, get_interview_analysis_prompt
 
 load_dotenv()
 
@@ -42,6 +45,86 @@ def get_whisper_model():
         _whisper_model = whisper.load_model("small")
         print("Whisper model loaded successfully.")
     return _whisper_model
+
+def clean_text_for_tts(text: str) -> str:
+    """
+    TTS 음성 생성을 위해 텍스트를 정제합니다.
+    이모티콘, 태그, 특수 기호 등을 제거합니다.
+
+    Args:
+        text: 원본 질문 텍스트
+
+    Returns:
+        정제된 텍스트
+    """
+    if not text:
+        return text
+
+    # 1. [공통], [압박] 같은 대괄호 태그와 뒤의 공백 제거
+    text = re.sub(r'\[.*?\]\s*', '', text)
+
+    # 2. 🌶️ 같은 특정 이모티콘 제거 (더 안전한 방법)
+    # 일반적인 이모티콘만 제거
+    emoji_pattern = re.compile(
+        "["
+        "\U0001F300-\U0001F9FF"  # 대부분의 이모티콘
+        "\U00002600-\U000027BF"  # 기타 기호
+        "]+",
+        flags=re.UNICODE
+    )
+    text = emoji_pattern.sub('', text)
+
+    # 3. 연속된 공백을 하나로 축소
+    text = re.sub(r'\s+', ' ', text)
+
+    # 4. 앞뒤 공백 제거
+    text = text.strip()
+
+    # 5. 안전장치: 텍스트가 비어있으면 경고
+    if not text:
+        print(f"WARNING: clean_text_for_tts resulted in empty string!")
+        return "질문을 준비 중입니다"  # 폴백 텍스트
+
+    return text
+
+async def cleanup_audio_files_after_delay(interview_id: int, delay_minutes: int = 5):
+    """
+    면접 종료 후 일정 시간(기본 5분) 후 해당 면접의 오디오 파일들을 자동으로 삭제합니다.
+
+    Args:
+        interview_id: 면접 ID
+        delay_minutes: 삭제 전 대기 시간 (분)
+    """
+    await asyncio.sleep(delay_minutes * 60)  # 분을 초로 변환
+
+    print(f"Starting audio file cleanup for interview {interview_id} after {delay_minutes} minute(s) delay...")
+
+    db = SessionLocal()
+    try:
+        # 해당 면접의 모든 답변 조회
+        answers = crud.interview.get_answers_by_interview(db, interview_id=interview_id)
+
+        deleted_count = 0
+        error_count = 0
+
+        for answer in answers:
+            if answer.audio_path:
+                try:
+                    if os.path.exists(answer.audio_path):
+                        os.remove(answer.audio_path)
+                        deleted_count += 1
+                        print(f"Deleted audio file: {answer.audio_path}")
+                    else:
+                        print(f"Audio file not found (already deleted?): {answer.audio_path}")
+                except Exception as e:
+                    error_count += 1
+                    print(f"Error deleting audio file {answer.audio_path}: {e}")
+
+        print(f"Audio cleanup completed for interview {interview_id}: {deleted_count} files deleted, {error_count} errors")
+    except Exception as e:
+        print(f"Error during audio cleanup for interview {interview_id}: {e}")
+    finally:
+        db.close()
 
 @router.post("/", response_model=InterviewSession)
 def create_interview_session(
@@ -77,19 +160,42 @@ def create_interview_session(
 
             genai.configure(api_key=google_api_key)
             model = genai.GenerativeModel(gemini_model_name)
-            prompt = f"""당신은 지원자의 역량을 깊이 있게 파악하려는 날카로운 면접관입니다. 당신의 임무는 지원자의 자기소개서와 일반적인 면접 질문을 조합하여, 핵심 역량과 경험의 진위, 그리고 문제 해결 능력을 종합적으로 검증할 수 있는 면접 질문 목록을 생성하는 것입니다. 반드시 아래 규칙과 출력 형식을 엄격하게 준수하여 답변해야 합니다.\n\n$$규칙$$\n\n질문 유형 조합: 질문 목록은 아래 두 가지 유형을 반드시 조합하여 생성해야 합니다.\n\n자기소개서 기반 질문: 지원자의 자기소개서에 명시된 경험, 역량, 성과, 장단점 등을 깊이 있게 파고드는 질문입니다.\n\n공통 질문: 모든 지원자에게 물어볼 수 있는 직무/회사 관련 질문이나 인성/가치관 질문입니다. (예: 입사 후 포부, 지원 동기, 마지막으로 하고 싶은 말 등)\n\n질문 개수: 자기소개서 내용의 분량과 깊이를 고려하여, 두 유형을 합쳐 최소 5개에서 최대 15개의 질문을 유동적으로 생성합니다.\n\n압박 질문 포함: 전체 질문 중 1~2개는 지원자의 논리력, 위기 대처 능력 등을 확인하기 위한 압박 질문(꼬리 질문, 반대 상황 가정 등)을 포함해야 합니다. 압박 질문은 🌶️ 아이콘으로 명확히 표시하세요.\n\n형식 준수: 아래에 제시된 **$$출력 형식$$**의 구조와 순서를 반드시 지켜야 합니다. 공통 질문 앞에는 [공통] 말머리를 붙여주세요.\n\n$$출력 형식$$\n\n예상 면접 질문 리스트\n\n(자기소개서 내용에 기반한 일반 질문 1)\n\n$$공통$$\n\n (모든 지원자에게 할 수 있는 직무/회사 관련 공통 질문)\n\n🌶️ (자기소개서 내용에 기반한 압박 질문)\n\n(이하 질문들을 규칙에 맞게 생성...)\n\n$$공통$$\n\n (모든 지원자에게 할 수 있는 인성/가치관 관련 공통 질문)\n\n이제 이 지침에 따라 아래 자기소개서를 분석하고 예상 면접 질문을 생성해 주세요.\n\n$$지원자 자기소개서$$\n\n\n{content}\n"""
+
+            # 개선된 프롬프트 모듈 사용
+            prompt = get_question_generation_prompt(content)
             response = model.generate_content(prompt)
-            
-            raw_questions = response.text.split('\n')
+
+            # JSON 형식으로 파싱 시도
             temp_questions = []
-            for q in raw_questions:
-                q = q.strip()
-                if not q or "예상 면접 질문 리스트" in q or q == "$$공통$$":
-                    continue
-                q = re.sub(r'^\d+\.\s*', '', q)
-                q = q.replace('🌶️', '').strip()
-                if q:
-                    temp_questions.append(q)
+            try:
+                # 응답에서 JSON 부분 추출
+                response_text = response.text.strip()
+                if "```json" in response_text:
+                    json_start = response_text.find("```json") + 7
+                    json_end = response_text.find("```", json_start)
+                    json_str = response_text[json_start:json_end].strip()
+                elif "```" in response_text:
+                    json_start = response_text.find("```") + 3
+                    json_end = response_text.find("```", json_start)
+                    json_str = response_text[json_start:json_end].strip()
+                else:
+                    json_str = response_text
+
+                parsed_response = json.loads(json_str)
+                # 태그와 이모티콘 유지 (프론트엔드에서 질문 유형 구분용)
+                temp_questions = [q["text"] for q in parsed_response.get("questions", [])]
+            except (json.JSONDecodeError, KeyError) as json_error:
+                # JSON 파싱 실패 시 기존 방식으로 폴백
+                print(f"JSON parsing failed, falling back to text split: {json_error}")
+                raw_questions = response.text.split('\n')
+                for q in raw_questions:
+                    q = q.strip()
+                    if not q or "예상 면접 질문 리스트" in q:
+                        continue
+                    # 번호만 제거, 태그와 이모티콘은 유지
+                    q = re.sub(r'^\d+\.\s*', '', q).strip()
+                    if q:
+                        temp_questions.append(q)
             
             if not temp_questions:
                 raise HTTPException(status_code=500, detail="Failed to generate questions.")
@@ -198,97 +304,30 @@ async def get_interview_results(
 """
 
     # --- AI Feedback Generation ---
+    print(f"Starting AI feedback generation for interview {interview_id}")
+    print(f"- Resume content length: {len(resume_content)}")
+    print(f"- Conversation history length: {len(conversation_history)}")
+    print(f"- Audio data: speech_rate={avg_speech_rate}, silence_ratio={avg_silence_ratio}")
+    print(f"- Video data: gaze={gaze_stability}, expression={expression_stability}, posture={posture_stability}")
+
     api_key = os.getenv("CLAUDE_API_KEY")
     claude_model = os.getenv("CLAUDE_MODEL")
     if not api_key or not claude_model:
         raise HTTPException(status_code=500, detail="Claude API configuration missing.")
     api_key = api_key.strip().strip('"').strip("'")
 
-    prompt = f"""당신은 수많은 면접 경험을 가진 전문 채용 컨설턴트입니다. 당신의 임무는 아래 제공되는 지원자의 "자기소개서", "면접 대화록", "음성 분석 데이터", "영상 분석 데이터"를 종합적으로 분석하여, 지원자의 역량과 개선점에 대한 심층적인 피드백 리포트를 작성하는 것입니다.
-
-반드시 아래의 "분석 기준"과 "출력 형식"을 엄격하게 준수하여 리포트를 작성해 주세요. (영상 분석 데이터가 없다면 해당 부분은 생략하고 리포트를 작성하세요.)
-
----
-### **자기소개서**
-```
-{resume_content}
-```
----
-### **면접 대화록**
-```
-{conversation_history}
-```
-{audio_analysis_summary}
-{video_analysis_summary}
----
-### **분석 기준**
-
-1.  **답변의 명확성 및 논리성 (Clarity & Logic):**
-    *   질문의 의도를 정확히 파악하고 있는가?
-    *   답변이 체계적이고 이해하기 쉬운가? (예: STAR 기법 활용)
-    *   주장에 대한 근거가 명확하고 타당한가?
-
-2.  **핵심 역량 및 경험 어필 (Keyword & Experience):**
-    *   자기소개서에 언급된 자신의 경험과 강점을 답변에 잘 녹여내고 있는가?
-    *   질문과 관련된 자신의 핵심 역량 키워드를 적절히 사용하고 있는가?
-
-3.  **커뮤니케이션 스킬 (음성 및 영상 포함):**
-    *   자신감 있는 어조와 긍정적인 태도를 보이는가? (대화 내용, 음성, 영상 데이터를 종합하여 추론)
-    *   불필요한 단어나 반복적인 표현을 최소화하고 있는가?
-    *   말하기 속도, 머뭇거림, 시선 처리, 표정, 자세 등은 적절한가? (음성 및 영상 분석 데이터 참고)
-
----
-### **출력 형식 (Markdown)**
-
-아래 형식을 반드시 준수하여, 각 항목에 대해 1-5점 척도로 점수를 매기고 구체적인 피드백을 작성해 주세요.
-
-# **AI 면접 분석 리포트**
-
-## **종합 평가**
-> 총평을 2-3문장으로 요약하여 제공합니다. 지원자의 가장 큰 강점과 가장 시급한 개선점을 언급해 주세요.
-
----
-
-## **세부 분석**
-
-### **1. 답변의 명확성 및 논리성**
-*   **점수:** [1-5점]
-*   **👍 잘한 점:**
-    *   (구체적인 답변 내용을 인용하며 칭찬)
-*   **👎 개선할 점:**
-    *   (구체적인 답변 내용을 인용하며 개선 방향 제시)
-
-### **2. 핵심 역량 및 경험 어필**
-*   **점수:** [1-5점]
-*   **👍 잘한 점:**
-    *   (자기소개서 내용과 답변을 비교하며 칭찬)
-*   **👎 개선할 점:**
-    *   (답변에서 아쉬웠던 부분과 자기소개서의 어떤 경험을 더 어필할 수 있었는지 제안)
-
-### **3. 커뮤니케이션 스킬 (음성 및 영상 포함)**
-*   **점수:** [1-5점]
-
-*   ** 음성 분석 (말하기 습관) **
-*   평균 말하기 속도: (수치)WPM
-*   머뭇거림 (침묵) 비율: (수치)%
-
-*   영상 분석 (시각적 태도)
-*   시선 안정성: (수치) (낮을수록 안정적)
-*   표정 안정성: (수치) (낮을수록 안정적)
-*   자세 안정성: (수치) (낮을수록 안정적)
-
-*   **👍 잘한 점:**
-    *   (자신감 있는 표현, 안정적인 시선 처리, 긍정적인 표정 등 칭찬)
-*   **👎 개선할 점:**
-    *   (음성/영상 분석 결과를 바탕으로 말하기 습관, 시선, 자세 등에 대한 조언)
-
----
-
-## **총점 및 제안**
-*   **총점:** [세 항목의 평균 점수를 소수점 첫째 자리까지 계산하여 표시] / 5.0
-*   **마지막 조언:**
-    > 지원자가 다음 면접에서 최고의 성과를 낼 수 있도록, 가장 중요한 핵심 조언 한 가지를 격려의 메시지와 함께 전달해 주세요.
-"""
+    # 개선된 프롬프트 모듈 사용
+    prompt = get_interview_analysis_prompt(
+        resume_content=resume_content,
+        conversation_history=conversation_history,
+        audio_analysis_summary=audio_analysis_summary,
+        video_analysis_summary=video_analysis_summary,
+        avg_speech_rate=avg_speech_rate,
+        avg_silence_ratio=avg_silence_ratio,
+        gaze_stability=gaze_stability,
+        expression_stability=expression_stability,
+        posture_stability=posture_stability
+    )
 
     headers = {
         "x-api-key": api_key,
@@ -303,17 +342,20 @@ async def get_interview_results(
     }
 
     try:
+        print(f"Calling Claude API for interview {interview_id}...")
         async with httpx.AsyncClient() as client:
             response = await client.post(
                 "https://api.anthropic.com/v1/messages",
                 headers=headers,
                 json=payload,
-                timeout=180.0
+                timeout=240.0  # 180초 → 240초(4분)로 연장
             )
+            print(f"Claude API responded with status {response.status_code}")
             response.raise_for_status()
-            
+
             response_data = response.json()
             feedback_text = response_data['content'][0]['text']
+            print(f"Successfully received feedback ({len(feedback_text)} characters)")
 
         analysis_create = AnalysisCreate(
             interview_id=interview_id,
@@ -382,16 +424,24 @@ async def websocket_interview(
             return
 
         await websocket.send_json({"type": "system", "message": f"Interview session started. {len(questions)} questions will be asked.", "status": "connected"})
-        
+
+        # 생성된 오디오 파일 경로를 추적 (에러 발생 시 정리용)
+        created_audio_files = []
+
         for index, question in enumerate(questions):
             await websocket.send_json({"type": "question", "text": question.question_text, "question_number": index + 1, "total_questions": len(questions)})
             
             try:
                 tts_model_name = os.getenv("TTS_MODEL_NAME", "gemini-2.5-flash-tts")
                 tts_voice_name = os.getenv("TTS_VOICE_NAME", "ko-KR-Neural2-C")
-                
+
+                # TTS용 텍스트 정제 (이모티콘, 태그 제거)
+                cleaned_text = clean_text_for_tts(question.question_text)
+                print(f"Original question: {question.question_text}")
+                print(f"Cleaned for TTS: {cleaned_text}")
+
                 tts_client = tts.TextToSpeechClient()
-                synthesis_input = tts.SynthesisInput(text=question.question_text)
+                synthesis_input = tts.SynthesisInput(text=cleaned_text)  # 정제된 텍스트 사용
                 voice = tts.VoiceSelectionParams(
                     language_code="ko-KR",
                     name=tts_voice_name,
@@ -412,14 +462,18 @@ async def websocket_interview(
 
             audio_dir = "audio_files"
             os.makedirs(audio_dir, exist_ok=True)
-            
+
             audio_filename = f"{uuid.uuid4()}.wav"
             audio_path = os.path.join(audio_dir, audio_filename)
+            audio_file_created = False
+            result = None  # Initialize to avoid NameError
 
             try:
                 # Load audio from bytes and export as WAV
                 audio_segment = AudioSegment.from_file(io.BytesIO(audio_bytes))
                 audio_segment.export(audio_path, format="wav")
+                audio_file_created = True
+                created_audio_files.append(audio_path)  # 추적 리스트에 추가
                 print(f"Successfully converted and saved audio to {audio_path}")
 
                 # Use the cached Whisper model
@@ -430,14 +484,36 @@ async def websocket_interview(
             except Exception as e:
                 print(f"Error during audio processing or transcription: {e}")
                 answer_text = ""
-            
-            answer_create = AnswerCreate(
-                question_id=question.question_id, 
-                answer_text=answer_text,
-                audio_path=audio_path,
-                whisper_result=result  # Save the full result
-            )
-            crud.interview.create_answer(db=db, obj_in=answer_create)
+                # 에러 발생 시 생성된 파일 즉시 삭제
+                if audio_file_created and os.path.exists(audio_path):
+                    try:
+                        os.remove(audio_path)
+                        created_audio_files.remove(audio_path)
+                        print(f"Cleaned up audio file after error: {audio_path}")
+                    except Exception as cleanup_error:
+                        print(f"Failed to cleanup audio file {audio_path}: {cleanup_error}")
+
+            # DB 저장
+            try:
+                answer_create = AnswerCreate(
+                    question_id=question.question_id,
+                    answer_text=answer_text,
+                    audio_path=audio_path if audio_file_created else None,
+                    whisper_result=result  # Save the full result (None if error occurred)
+                )
+                crud.interview.create_answer(db=db, obj_in=answer_create)
+            except Exception as db_error:
+                print(f"Error saving answer to database: {db_error}")
+                # DB 저장 실패 시 오디오 파일 정리
+                if audio_file_created and os.path.exists(audio_path):
+                    try:
+                        os.remove(audio_path)
+                        if audio_path in created_audio_files:
+                            created_audio_files.remove(audio_path)
+                        print(f"Cleaned up audio file after DB error: {audio_path}")
+                    except Exception as cleanup_error:
+                        print(f"Failed to cleanup audio file {audio_path}: {cleanup_error}")
+                raise  # Re-raise to trigger WebSocket error handling
             
             await websocket.send_json({"type": "system", "message": f"Answer for question {index + 1} received.", "status": "processing"})
 
@@ -445,11 +521,46 @@ async def websocket_interview(
 
     except WebSocketDisconnect:
         print(f"Client for interview {interview_id} disconnected.")
+        # 연결 중단 시 추적 중인 파일들 즉시 정리
+        if 'created_audio_files' in locals():
+            for audio_file in created_audio_files:
+                try:
+                    if os.path.exists(audio_file):
+                        os.remove(audio_file)
+                        print(f"Cleaned up audio file after disconnect: {audio_file}")
+                except Exception as cleanup_error:
+                    print(f"Failed to cleanup audio file {audio_file}: {cleanup_error}")
     except Exception as e:
-        await websocket.send_json({"type": "error", "message": str(e)})
+        print(f"Unexpected error in WebSocket for interview {interview_id}: {e}")
+        try:
+            await websocket.send_json({"type": "error", "message": str(e)})
+        except:
+            pass  # WebSocket might be closed already
+        # 에러 발생 시에도 추적 중인 파일들 즉시 정리
+        if 'created_audio_files' in locals():
+            for audio_file in created_audio_files:
+                try:
+                    if os.path.exists(audio_file):
+                        os.remove(audio_file)
+                        print(f"Cleaned up audio file after error: {audio_file}")
+                except Exception as cleanup_error:
+                    print(f"Failed to cleanup audio file {audio_file}: {cleanup_error}")
     finally:
+        # 정상 종료된 경우에만 5분 후 자동 삭제 예약
+        # (중단/에러 시에는 이미 위에서 정리됨)
+        interview_completed = 'created_audio_files' in locals() and len(created_audio_files) > 0
+
+        if interview_completed:
+            asyncio.create_task(cleanup_audio_files_after_delay(interview_id, delay_minutes=5))
+            print(f"Interview {interview_id} completed. Scheduled audio cleanup in 5 minutes")
+        else:
+            print(f"Interview {interview_id} did not complete normally. Files already cleaned up if any.")
+
         db.close()
-        await websocket.close()
+        try:
+            await websocket.close()
+        except:
+            pass  # WebSocket might be closed already
 
 
 @router.post("/{interview_id}/video-analysis", status_code=200)
@@ -463,12 +574,16 @@ def handle_video_analysis(
     Receive video landmark data, analyze it, and save the results to the
     video_analysis table.
     """
+    print(f"Received video-analysis request for interview {interview_id}")
+    print(f"- Number of landmark frames: {len(request_data.landmarks) if request_data.landmarks else 0}")
+
     interview = crud.interview.get_interview(db, interview_id=interview_id)
     if not interview or interview.user_id != current_user.user_id:
         raise HTTPException(status_code=404, detail="Interview not found or access denied")
 
     landmark_data = request_data.landmarks
     video_metrics = analyze_video_landmarks(landmark_data)
+    print(f"- Calculated metrics: gaze={video_metrics.get('gaze_stability')}, expression={video_metrics.get('expression_stability')}, posture={video_metrics.get('posture_stability')}")
 
     # Check if video analysis for this interview already exists
     existing_video_analysis = crud.video_analysis.get_by_interview_id(db, interview_id=interview_id)
