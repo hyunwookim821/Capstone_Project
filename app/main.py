@@ -48,3 +48,16 @@ for route in app.routes:
         print(f"Path: {route.path}, Name: {route.name}, Methods: {route.methods}")
 print("-----------------------------")
 
+
+if __name__ == "__main__":
+    import uvicorn
+
+    # Run with WebSocket max size limit (10MB for audio chunks)
+    uvicorn.run(
+        "app.main:app",
+        host="127.0.0.1",
+        port=8000,
+        reload=True,
+        ws_max_size=10485760  # 10MB
+    )
+
