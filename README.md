@@ -56,6 +56,10 @@ AI를 활용하여 실제와 같은 모의 면접을 연습하고, 음성 및 �
 -   PostgreSQL (13 이상 권장)
 -   FFmpeg (오디오/비디오 처리 및 변환에 필요)
     -    ffmpeg.exe, ffplay.exe, ffprobe.exe 프로젝트 루트 디렉토리에 위치
+ 
+## ERD
+<img width="1870" height="862" alt="AI JOP ERD" src="https://github.com/user-attachments/assets/1d00a19a-c02c-4ea8-884a-972bd87b1030" />
+
 
 ## 4. 로컬 환경 설정 및 실행 가이드
 
