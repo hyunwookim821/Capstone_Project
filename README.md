@@ -24,6 +24,76 @@ AI를 활용하여 실제와 같은 모의 면접을 연습하고, 음성 및 �
 - Mustache 템플릿 기반 UI 화면 구성  
 - 사용자 이벤트 처리 및 화면 흐름 설계
 
+# 기술스택
+## 핵심 프레임워크 & 언어
+- **FastAPI** - Python 웹 프레임워크 (백엔드 API 구현)  
+- **Python 3.11**
+
+## 데이터베이스
+- **PostgreSQL** - 메인 데이터베이스  
+- **pgvector** - 벡터 검색 확장 (임베딩 저장)  
+- **SQLAlchemy** - ORM  
+- **Alembic** - 데이터베이스 마이그레이션  
+- **psycopg2-binary** - PostgreSQL 드라이버  
+
+## AI 서비스
+- **Google Generative AI (Gemini)** - 면접 질문 생성  
+- **Google Cloud Text-to-Speech** - TTS (음성 합성)  
+- **Anthropic Claude** - 면접 피드백 분석  
+- **OpenAI Whisper** - STT (음성 → 텍스트 변환)  
+
+## 오디오 처리
+- **pydub** - 오디오 파일 변환 및 처리  
+- **soundfile** - 오디오 I/O  
+- **FFmpeg** - 오디오 코덱 (외부 바이너리)  
+
+## 비디오 분석
+- **numpy** - 프론트엔드에서 받은 MediaPipe 랜드마크 데이터 분석  
+  - 시선 안정성, 표정 안정성, 자세 안정성 계산  
+> 참고: MediaPipe와 OpenCV는 프론트엔드(클라이언트)에서 사용되며, 백엔드는 전송된 랜드마크 JSON 데이터만 처리  
+
+## 문서 처리
+- **python-docx** - Word(.docx) 파일 파싱  
+- **PyPDF2** - PDF 파일 파싱  
+- **beautifulsoup4** - HTML 파싱  
+- **requests** - HTTP 클라이언트  
+
+## 자연어 처리
+- **sentence-transformers** - 텍스트 임베딩 생성 (합격 자소서 벡터 검색)  
+- **hanspell** - 한글 맞춤법 검사 (커스텀 Git 저장소)  
+
+## 인증 & 보안
+- **python-jose** - JWT 토큰 생성/검증  
+- **passlib**, **bcrypt** - 비밀번호 해싱 및 암호화  
+
+## 기타
+- **pydantic** - 데이터 검증 및 스키마 정의  
+- **python-multipart** - 파일 업로드 처리  
+- **python-dotenv** - 환경 변수 관리  
+- **httpx** - 비동기 HTTP 클라이언트  
+
+## 통신 프로토콜
+- **REST API** - 일반 HTTP 엔드포인트  
+- **WebSocket** - 실시간 면접 진행 (base64 오디오 전송)  
+
+## 개발 도구
+- **Docker & Docker Compose** - PostgreSQL 컨테이너 관리  
+
+## 프론트엔드 & 페이지 처리
+1. **뷰 페이지**
+   - 템플릿 엔진: Mustache  
+   - 파일 형식: `.mustache`  
+   - 내부 구조: HTML + CSS + JS 스크립트  
+
+2. **페이지 이동 로직**
+   - 프레임워크: Java + Spring Boot (Spring MVC)  
+   - 계층 구조: Controller / Service / Repository  
+   - DB 접근: Spring Data JPA 기반 Repository 사용  
+
+3. **동작 처리 로직**
+   - 스크립트: JavaScript
+
+
 ## 2. 시스템 아키텍처
 
 이 프로젝트는 두 개의 독립적인 서버로 구성된 **BFF(Backend for Frontend)** 패턴을 따릅니다.
