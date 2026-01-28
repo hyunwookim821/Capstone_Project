@@ -227,34 +227,38 @@ cd Front
 <details>
 <summary>▶️ 시작 화면</summary>
 
-![시작화면]<img width="1462" height="1269" alt="KakaoTalk_20251025_172135237" src="https://github.com/user-attachments/assets/79e394d9-b1e2-453d-8e6d-e0946293ad66" />
+<img width="1462" height="1269" alt="KakaoTalk_20251025_172135237" src="https://github.com/user-attachments/assets/79e394d9-b1e2-453d-8e6d-e0946293ad66" />
 
 </details>
 
 <details>
 <summary>▶️ 로그인 / 회원가입 화면</summary>
 
-![로그인화면](https://raw.githubusercontent.com/hyunwookim821/Capstone_Project/main/assets/screenshots/login.png)
+<img width="656" height="850" alt="KakaoTalk_20251025_172151494" src="https://github.com/user-attachments/assets/cc51d874-5ebe-4931-bf9c-7a456f6ab448" />
+<img width="625" height="1179" alt="KakaoTalk_20251025_172144826" src="https://github.com/user-attachments/assets/12b87c11-8f65-4752-9f19-801f6658e00f" />
+
 
 </details>
 
 <details>
 <summary>▶️ 자소서 피드백 화면</summary>
 
-![자소서화면](https://raw.githubusercontent.com/hyunwookim821/Capstone_Project/main/assets/screenshots/resume.png)
+
 
 </details>
 
 <details>
 <summary>▶️ 면접 진행 화면</summary>
 
-![면접화면](https://raw.githubusercontent.com/hyunwookim821/Capstone_Project/main/assets/screenshots/interview.png)
+<img width="2532" height="1170" alt="KakaoTalk_20251203_200220889_03" src="https://github.com/user-attachments/assets/f71d3787-72a4-4ad0-8a15-b2eed4bdecb8" />
+
 
 </details>
 
 <details>
 <summary>▶️ 면접 피드백 화면</summary>
 
-![피드백화면](https://raw.githubusercontent.com/hyunwookim821/Capstone_Project/main/assets/screenshots/feedback.png)
+<img width="2532" height="1170" alt="KakaoTalk_20251203_200220889_04" src="https://github.com/user-attachments/assets/6b528039-d4f9-44e5-92ae-74921566a69f" />
+
 
 </details>
