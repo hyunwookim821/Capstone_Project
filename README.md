@@ -225,20 +225,36 @@ cd Front
 ## 🖥️ 실행 화면
 
 <details>
-<summary>🚀 실행 화면 보기</summary>
+<summary>▶️ 시작 화면</summary>
 
-<br>
+![시작화면]("C:\Users\rlagu\OneDrive\바탕 화면\캡스톤\KakaoTalk_20251025_172135237.png")
 
-### ✅ 로그인 화면
-![login](docs/login.png)
+</details>
 
-### ✅ 면접 시작 화면
-![start](docs/start.png)
+<details>
+<summary>▶️ 로그인 / 회원가입 화면</summary>
 
-### ✅ 실시간 면접 진행 (WebSocket)
-![interview](docs/interview.png)
+![로그인화면](https://raw.githubusercontent.com/hyunwookim821/Capstone_Project/main/assets/screenshots/login.png)
 
-### ✅ AI 분석 결과 화면
-![result](docs/result.png)
+</details>
+
+<details>
+<summary>▶️ 자소서 피드백 화면</summary>
+
+![자소서화면](https://raw.githubusercontent.com/hyunwookim821/Capstone_Project/main/assets/screenshots/resume.png)
+
+</details>
+
+<details>
+<summary>▶️ 면접 진행 화면</summary>
+
+![면접화면](https://raw.githubusercontent.com/hyunwookim821/Capstone_Project/main/assets/screenshots/interview.png)
+
+</details>
+
+<details>
+<summary>▶️ 면접 피드백 화면</summary>
+
+![피드백화면](https://raw.githubusercontent.com/hyunwookim821/Capstone_Project/main/assets/screenshots/feedback.png)
 
 </details>
