@@ -227,7 +227,7 @@ cd Front
 <details>
 <summary>▶️ 시작 화면</summary>
 
-![시작화면]("C:\Users\rlagu\OneDrive\바탕 화면\캡스톤\KakaoTalk_20251025_172135237.png")
+![시작화면]<img width="1462" height="1269" alt="KakaoTalk_20251025_172135237" src="https://github.com/user-attachments/assets/79e394d9-b1e2-453d-8e6d-e0946293ad66" />
 
 </details>
 
