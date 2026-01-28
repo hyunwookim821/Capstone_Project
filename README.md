@@ -221,3 +221,24 @@ cd Front
 -   `POST /api/interviews`: 면접 세션 생성
 -   `POST /api/interviews/{id}/video-analysis`: 영상 분석 데이터 전송
 -   `GET /api/interviews/{id}/results`: 최종 종합 분석 결과 요청
+
+## 🖥️ 실행 화면
+
+<details>
+<summary>🚀 실행 화면 보기</summary>
+
+<br>
+
+### ✅ 로그인 화면
+![login](docs/login.png)
+
+### ✅ 면접 시작 화면
+![start](docs/start.png)
+
+### ✅ 실시간 면접 진행 (WebSocket)
+![interview](docs/interview.png)
+
+### ✅ AI 분석 결과 화면
+![result](docs/result.png)
+
+</details>
