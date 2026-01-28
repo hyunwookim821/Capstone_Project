@@ -243,6 +243,7 @@ cd Front
 <details>
 <summary>▶️ 자소서 피드백 화면</summary>
 
+<img width="2532" height="1170" alt="KakaoTalk_20251203_200220889" src="https://github.com/user-attachments/assets/2b32ba8a-e94f-4a22-94e0-552e11f8358a" />
 
 
 </details>
